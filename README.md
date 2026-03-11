@@ -82,7 +82,7 @@ The grand finale screen.
 
 - **Background**: A rotating radial gradient (pink → mint → teal → yellow) behind a multi-layer parallax scene.
 - **Parallax Layers**: Clouds (slow), mountains (medium), and flowers (fast) shift vertically as the user scrolls through sections.
-- **Floating Particles**: 60 magical particles float across the background continuously.
+- **Floating Particles**: 20 magical particles float across the background continuously.
 - **Color Palette**: Soft pastels — cute pink, mint green, teal (`#5F9EA0`), warm yellow, and lavender.
 - **Typography**: System sans-serif body + "Dancing Script" for cursive display text.
 

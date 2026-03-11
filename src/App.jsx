@@ -11,27 +11,29 @@ import ParallaxBackground from './components/ParallaxBackground';
 
 const sectionVariants = {
   initial: {
-    clipPath: "circle(0% at 50% 100%)",
     opacity: 0,
+    scale: 0.97, // Subtle zoom-in from just-below full size
+    y: 40,       // Slide up 40px — feels natural without being disorienting
     zIndex: 20,
   },
   animate: {
-    clipPath: "circle(150% at 50% 50%)",
     opacity: 1,
+    scale: 1,
+    y: 0,
     zIndex: 10,
     transition: {
-      type: "spring",
-      stiffness: 20,
-      damping: 20,
-      duration: 1.5,
+      duration: 0.6,
+      ease: [0.25, 0.46, 0.45, 0.94], // cubic-bezier ease-out-quart — snappy but smooth
     }
   },
   exit: {
     opacity: 0,
-    scale: 0.95,
+    scale: 0.97,
+    y: -20,
     zIndex: 0,
     transition: {
-      duration: 0.8
+      duration: 0.4,
+      ease: "easeIn",
     }
   }
 };
@@ -85,11 +87,11 @@ function App() {
       if (e.deltaY > 30 && step < totalSteps - 1) {
         setIsScrolling(true);
         setStep(prev => prev + 1);
-        setTimeout(() => setIsScrolling(false), 2000); // Main section transition debounce
+        setTimeout(() => setIsScrolling(false), 1200); // Main section transition debounce
       } else if (e.deltaY < -30 && step > 1) { // Prevents going back to cake
         setIsScrolling(true);
         setStep(prev => prev - 1);
-        setTimeout(() => setIsScrolling(false), 2000);
+        setTimeout(() => setIsScrolling(false), 1200);
       }
     };
 
@@ -139,11 +141,11 @@ function App() {
       if (deltaY > 50 && step < totalSteps - 1) {
         setIsScrolling(true);
         setStep(prev => prev + 1);
-        setTimeout(() => setIsScrolling(false), 2000);
+        setTimeout(() => setIsScrolling(false), 1200);
       } else if (deltaY < -50 && step > 1) {
         setIsScrolling(true);
         setStep(prev => prev - 1);
-        setTimeout(() => setIsScrolling(false), 2000);
+        setTimeout(() => setIsScrolling(false), 1200);
       }
     };
     

@@ -29,12 +29,12 @@ export default function ParallaxBackground({ globalProgress }) {
       />
 
       {/* Magical Floating Particles */}
-      <FloatingParticles count={60} />
+      <FloatingParticles count={20} />
 
       {/* Sky/Clouds Layer (Slowest) */}
       <motion.div 
         className="absolute inset-0 w-full h-[150%] top-[-5%]"
-        style={{ y: cloudsY }}
+        style={{ y: cloudsY, willChange: 'transform' }}
       >
         <img 
           src="/assets/parallax_clouds_1773219856526.png" 
@@ -46,7 +46,7 @@ export default function ParallaxBackground({ globalProgress }) {
       {/* Mountains Layer (Medium) */}
       <motion.div 
         className="absolute inset-x-0 w-full h-[150%] bottom-[-50%]"
-        style={{ y: mountainsY }}
+        style={{ y: mountainsY, willChange: 'transform' }}
       >
         <img 
           src="/assets/parallax_mountains_1773219873040.png" 
@@ -58,7 +58,7 @@ export default function ParallaxBackground({ globalProgress }) {
       {/* Foreground Flowers Layer (Fastest) */}
       <motion.div 
         className="absolute inset-x-0 w-full h-[150%] bottom-[-100%]"
-        style={{ y: flowersY }}
+        style={{ y: flowersY, willChange: 'transform' }}
       >
         <img 
           src="/assets/parallax_flowers_1773219887277.png" 
