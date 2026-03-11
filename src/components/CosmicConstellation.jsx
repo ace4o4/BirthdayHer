@@ -1,0 +1,510 @@
+import { useRef, useMemo, useEffect } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
+
+// ==========================================
+// LETTER SEGMENTS — one per connection phase
+// ==========================================
+const letterSegments = [
+  "From the first day I talked to you, I knew there was something special about you. Your laugh, your stubborn cuteness — everything lights up my world.",
+  "Your kindness, your energy, the way you fight through everything silently — I see it all. You are the strongest soul I know.",
+  "You deserve the entire universe and more. Never forget how truly amazing you are.",
+  "I promise to be there through every storm and every sunrise.",
+  "I promise to make you laugh when the world feels heavy.",
+  "I promise to protect your peace, your dreams, and your happiness.",
+  "You are my peace in this chaotic universe.",
+  "Happy Birthday, my forever person. 🌸",
+  "— with all my love, always ✦",
+];
+
+// ==========================================
+// LEO CONSTELLATION — matching reference image shape
+// Wider horizontal layout: body quad + head Y-fork
+// ==========================================
+const stars = [
+  // Body — wide quadrilateral
+  { x: -4.5, y: -1.0, name: 'Denebola', bright: false },  // 0 — β tail (far left)
+  { x: -2.0, y:  0.8, name: 'Zosma', bright: false },      // 1 — δ upper-left body
+  { x: -1.5, y: -1.2, name: 'Chertan', bright: false },    // 2 — θ lower body
+  { x:  1.0, y:  0.8, name: 'Algieba', bright: false },    // 3 — γ center-upper
+  { x:  1.5, y: -0.5, name: 'Al Jabhah', bright: false },  // 4 — η center-lower
+  { x:  3.5, y: -1.5, name: 'Regulus', bright: true },     // 5 — α BRIGHTEST (front paw)
+  // Head — Y-fork going up-right
+  { x:  2.0, y:  2.0, name: 'Adhafera', bright: false },   // 6 — ζ head base
+  { x:  3.0, y:  3.5, name: 'Ras Elased', bright: false }, // 7 — μ head top
+  { x:  4.0, y:  3.2, name: 'epsilon', bright: false },    // 8 — ε fork right
+  { x:  3.8, y:  2.2, name: 'Alterf', bright: false },     // 9 — λ fork down-right
+];
+
+// Lines connecting stars — drawn ONE BY ONE on scroll
+const lines = [
+  // Body quadrilateral
+  [0, 1],  // Denebola → Zosma (left top edge)
+  [0, 2],  // Denebola → Chertan (left bottom edge)
+  [1, 3],  // Zosma → Algieba (top edge)
+  [2, 4],  // Chertan → Al Jabhah (bottom edge)
+  [3, 4],  // Algieba → Al Jabhah (right side of body)
+  [4, 5],  // Al Jabhah → Regulus (front leg)
+  // Head
+  [3, 6],  // Algieba → Adhafera (neck)
+  [6, 7],  // Adhafera → Ras Elased (head up)
+  [7, 8],  // Ras Elased → epsilon (fork right)
+  [7, 9],  // Ras Elased → Alterf (fork down-right) — NOT USED, only 9 text segments
+];
+
+// ==========================================
+// BACKGROUND STARS — deep space twinkle
+// ==========================================
+function BackgroundStars({ count = 3000 }) {
+  const ref = useRef();
+  const { positions, opacities } = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    const ops = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 80;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 50;
+      pos[i * 3 + 2] = -Math.random() * 25 - 2;
+      ops[i] = Math.random();
+    }
+    return { positions: pos, opacities: ops };
+  }, [count]);
+
+  useFrame((state) => {
+    if (!ref.current) return;
+    ref.current.rotation.y = state.clock.elapsedTime * 0.002;
+  });
+
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} />
+      </bufferGeometry>
+      <pointsMaterial size={0.04} color="#e2e8f0" transparent opacity={0.7} sizeAttenuation />
+    </points>
+  );
+}
+
+// ==========================================
+// SOFT NEBULA GLOW — pastel galaxy feel
+// ==========================================
+function NebulaClouds() {
+  const clouds = useMemo(() => [
+    { pos: [-12, 6, -18], size: 4, color: '#4c1d95' },
+    { pos: [14, -5, -20], size: 5, color: '#831843' },
+    { pos: [-8, -7, -16], size: 3, color: '#1e3a5f' },
+    { pos: [8, 8, -22], size: 5, color: '#78350f' },
+    { pos: [0, 1, -14], size: 2.5, color: '#581c87' },
+    { pos: [-15, 0, -18], size: 4, color: '#9d174d' },
+  ], []);
+
+  return (
+    <group>
+      {clouds.map((n, i) => (
+        <mesh key={i} position={n.pos}>
+          <sphereGeometry args={[n.size, 12, 12]} />
+          <meshBasicMaterial color={n.color} transparent opacity={0.04} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ==========================================
+// DIVINE GLOW — appears when constellation is complete
+// ==========================================
+function DivineGlow({ scrollProgress }) {
+  const glowRef = useRef();
+  const raysRef = useRef();
+
+  useFrame((state) => {
+    if (!glowRef.current) return;
+    const p = scrollProgress.current;
+    const time = state.clock.elapsedTime;
+
+    // Glow appears after all lines are drawn (90%+)
+    const glowProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));
+    const easedGlow = glowProgress * glowProgress;
+
+    glowRef.current.material.opacity = easedGlow * 0.2;
+    glowRef.current.scale.setScalar(1 + Math.sin(time * 0.8) * 0.05 * easedGlow);
+
+    if (raysRef.current) {
+      raysRef.current.material.opacity = easedGlow * 0.12;
+      raysRef.current.rotation.z = time * 0.1;
+    }
+  });
+
+  return (
+    <group position={[0, 1, -0.5]}>
+      {/* Inner glow */}
+      <mesh ref={glowRef}>
+        <circleGeometry args={[6, 32]} />
+        <meshBasicMaterial color="#fbbf24" transparent opacity={0} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Rotating rays */}
+      <mesh ref={raysRef}>
+        <ringGeometry args={[4, 8, 6]} />
+        <meshBasicMaterial color="#fde68a" transparent opacity={0} side={THREE.DoubleSide} wireframe />
+      </mesh>
+    </group>
+  );
+}
+
+// ==========================================
+// THE CONSTELLATION — dots + sequential line connections
+// ==========================================
+function Constellation({ scrollProgress }) {
+  const groupRef = useRef();
+  const starMeshes = useRef([]);
+  const glowMeshes = useRef([]);
+  const lineRefs = useRef([]);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const p = scrollProgress.current;
+    const time = state.clock.elapsedTime;
+    const totalLines = lines.length; // 9 lines
+
+    // Each line occupies a portion of 5% to 90% scroll
+    const linePhaseStart = 0.05;
+    const linePhaseEnd = 0.88;
+
+    // --- Update stars: twinkle + brighten when their line arrives ---
+    stars.forEach((star, i) => {
+      const mesh = starMeshes.current[i];
+      const glow = glowMeshes.current[i];
+      if (!mesh) return;
+
+      // Base twinkle
+      const twinkle = 1 + Math.sin(time * 3 + i * 1.3) * 0.2;
+
+      // Check if this star is "active" (connected by any drawn line)
+      let isActive = false;
+      lines.forEach(([a, b], lineIdx) => {
+        const lineStart = linePhaseStart + (lineIdx / totalLines) * (linePhaseEnd - linePhaseStart);
+        const lineEnd = linePhaseStart + ((lineIdx + 1) / totalLines) * (linePhaseEnd - linePhaseStart);
+        const lineProgress = Math.min(1, Math.max(0, (p - lineStart) / (lineEnd - lineStart)));
+        if ((a === i || b === i) && lineProgress > 0.5) isActive = true;
+      });
+
+      // Divine mode when all lines complete
+      const divineProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));
+
+      const baseScale = star.bright ? 0.08 : 0.06;
+      const activeBoost = isActive ? 1.4 : 0.8;
+      const divineBoost = 1 + divineProgress * 0.6;
+
+      mesh.scale.setScalar(twinkle * activeBoost * divineBoost);
+      mesh.material.emissiveIntensity = (isActive ? 2.5 : 0.8) + divineProgress * 3;
+      mesh.material.opacity = (isActive ? 1 : 0.5) + divineProgress * 0.5;
+
+      if (glow) {
+        glow.scale.setScalar(isActive ? twinkle * 1.2 * divineBoost : 0.01);
+        glow.material.opacity = isActive ? 0.2 + divineProgress * 0.15 : 0;
+      }
+    });
+
+    // --- Update lines: draw one by one based on scroll ---
+    lines.forEach(([aIdx, bIdx], lineIdx) => {
+      const lineObj = lineRefs.current[lineIdx];
+      if (!lineObj) return;
+
+      const lineStart = linePhaseStart + (lineIdx / totalLines) * (linePhaseEnd - linePhaseStart);
+      const lineEnd = linePhaseStart + ((lineIdx + 1) / totalLines) * (linePhaseEnd - linePhaseStart);
+      const lineProgress = Math.min(1, Math.max(0, (p - lineStart) / (lineEnd - lineStart)));
+
+      const starA = stars[aIdx];
+      const starB = stars[bIdx];
+
+      const geo = lineObj.geometry;
+      const positions = geo.attributes.position.array;
+
+      positions[0] = starA.x;
+      positions[1] = starA.y;
+      positions[2] = 0;
+      positions[3] = THREE.MathUtils.lerp(starA.x, starB.x, lineProgress);
+      positions[4] = THREE.MathUtils.lerp(starA.y, starB.y, lineProgress);
+      positions[5] = 0;
+
+      geo.attributes.position.needsUpdate = true;
+
+      // Divine glow makes lines brighter
+      const divineProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));
+      lineObj.material.opacity = lineProgress > 0.01 ? (0.7 + divineProgress * 0.3) : 0;
+      lineObj.material.color.set(divineProgress > 0.5 ? '#fef3c7' : '#fbbf24');
+    });
+
+    // Gentle sway when complete
+    const divineProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));
+    groupRef.current.rotation.z = Math.sin(time * 0.3) * 0.015 * divineProgress;
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* Constellation star dots — SMALL */}
+      {stars.map((star, i) => (
+        <group key={i} position={[star.x, star.y, 0]}>
+          {/* Tiny star dot */}
+          <mesh ref={(el) => (starMeshes.current[i] = el)}>
+            <sphereGeometry args={[star.bright ? 0.08 : 0.06, 12, 12]} />
+            <meshStandardMaterial
+              color={star.bright ? '#fca5a5' : '#f5f5f4'}
+              emissive={star.bright ? '#ef4444' : '#fbbf24'}
+              emissiveIntensity={0.8}
+              transparent
+              opacity={0.5}
+            />
+          </mesh>
+          {/* Tiny subtle glow */}
+          <mesh ref={(el) => (glowMeshes.current[i] = el)} scale={0.01}>
+            <ringGeometry args={[0.08, 0.15, 16]} />
+            <meshBasicMaterial color={star.bright ? '#fca5a5' : '#fde68a'} transparent opacity={0} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Connection lines — one per connection */}
+      {lines.map((_, i) => {
+        const posArray = new Float32Array(6);
+        return (
+          <lineSegments key={`line-${i}`} ref={(el) => (lineRefs.current[i] = el)}>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                count={2}
+                array={posArray}
+                itemSize={3}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#fbbf24" transparent opacity={0} />
+          </lineSegments>
+        );
+      })}
+    </group>
+  );
+}
+
+// ==========================================
+// LETTER TEXT OVERLAY — appears between connections, fades at divine
+// ==========================================
+function LetterOverlay({ scrollProgress }) {
+  const ref = useRef();
+
+  useEffect(() => {
+    const totalLines = lines.length;
+    const linePhaseStart = 0.05;
+    const linePhaseEnd = 0.88;
+
+    const animate = () => {
+      if (!ref.current) return;
+      const p = scrollProgress.current;
+      const children = ref.current.children;
+
+      // Divine mode — fade ALL text
+      const divineProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));
+
+      // Show one text segment per line connection
+      for (let i = 0; i < Math.min(children.length, totalLines); i++) {
+        const lineStart = linePhaseStart + (i / totalLines) * (linePhaseEnd - linePhaseStart);
+        const lineEnd = linePhaseStart + ((i + 1) / totalLines) * (linePhaseEnd - linePhaseStart);
+
+        // Fade in during this line's phase
+        const fadeIn = Math.min(1, Math.max(0, (p - lineStart) / ((lineEnd - lineStart) * 0.4)));
+        // Fade out as next line starts
+        const nextStart = linePhaseStart + ((i + 1) / totalLines) * (linePhaseEnd - linePhaseStart);
+        const fadeOut = i < totalLines - 1
+          ? (p > nextStart + 0.02 ? Math.max(0, 1 - (p - nextStart - 0.02) / 0.03) : 1)
+          : 1;
+
+        const opacity = fadeIn * fadeOut * (1 - divineProgress);
+        children[i].style.opacity = String(opacity);
+        children[i].style.transform = `translateY(${(1 - fadeIn) * 20}px)`;
+      }
+
+      requestAnimationFrame(animate);
+    };
+
+    const raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [scrollProgress]);
+
+  return (
+    <div
+      ref={ref}
+      className="fixed top-0 left-0 w-full h-screen pointer-events-none z-20 flex items-end justify-center pb-16 px-6"
+    >
+      {letterSegments.map((text, i) => (
+        <div
+          key={i}
+          className="absolute bottom-16 left-1/2 -translate-x-1/2 max-w-lg text-center opacity-0 transition-none"
+        >
+          <p
+            className="text-base md:text-lg leading-relaxed font-medium"
+            style={{
+              color: '#fde68a',
+              textShadow: '0 0 25px rgba(251,191,36,0.5), 0 0 50px rgba(251,191,36,0.15)',
+              fontFamily: "'Dancing Script', cursive, sans-serif",
+              fontSize: '1.2rem',
+            }}
+          >
+            "{text}"
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ==========================================
+// DIVINE TITLE — appears at the end
+// ==========================================
+function DivineTitle({ scrollProgress }) {
+  const ref = useRef();
+
+  useEffect(() => {
+    const animate = () => {
+      if (!ref.current) return;
+      const p = scrollProgress.current;
+      const divineProgress = Math.min(1, Math.max(0, (p - 0.92) / 0.08));
+      ref.current.style.opacity = String(divineProgress);
+      ref.current.style.transform = `translateY(${(1 - divineProgress) * 30}px) scale(${0.8 + divineProgress * 0.2})`;
+      requestAnimationFrame(animate);
+    };
+    const raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [scrollProgress]);
+
+  return (
+    <div
+      ref={ref}
+      className="fixed top-0 left-0 w-full h-screen pointer-events-none z-30 flex flex-col items-center justify-center gap-4 opacity-0"
+    >
+      <p
+        className="text-sm tracking-[0.3em] uppercase font-bold"
+        style={{ color: '#c4b5fd', textShadow: '0 0 20px rgba(139,92,246,0.5)' }}
+      >
+        Purva Phalguni
+      </p>
+      <h2
+        className="text-4xl md:text-6xl font-bold"
+        style={{
+          color: '#fef3c7',
+          textShadow: '0 0 40px rgba(251,191,36,0.6), 0 0 80px rgba(251,191,36,0.3)',
+          fontFamily: "'Dancing Script', cursive, sans-serif"
+        }}
+      >
+        ✦ Written in the Stars ✦
+      </h2>
+      <p
+        className="text-lg mt-2"
+        style={{ color: '#e9d5ff', textShadow: '0 0 15px rgba(139,92,246,0.4)' }}
+      >
+        for you, always 💫
+      </p>
+    </div>
+  );
+}
+
+// ==========================================
+// CAMERA
+// ==========================================
+function CosmicCamera({ scrollProgress }) {
+  const { camera } = useThree();
+  useFrame(() => {
+    const p = scrollProgress.current;
+    camera.position.x = Math.sin(p * Math.PI * 0.2) * 0.5;
+    camera.position.y = 0.8 + Math.cos(p * Math.PI * 0.15) * 0.3;
+    camera.position.z = 10 - p * 0.8;
+    camera.lookAt(0, 0.5, 0);
+  });
+  return null;
+}
+
+// ==========================================
+// SCENE
+// ==========================================
+function CosmicScene({ scrollProgress }) {
+  return (
+    <>
+      <ambientLight intensity={0.08} />
+      <pointLight position={[0, 5, 5]} intensity={0.3} color="#fbbf24" />
+      <pointLight position={[-6, -3, 3]} intensity={0.15} color="#a855f7" />
+      <pointLight position={[6, 2, -2]} intensity={0.1} color="#ec4899" />
+
+      <CosmicCamera scrollProgress={scrollProgress} />
+      <BackgroundStars />
+      <NebulaClouds />
+      <Constellation scrollProgress={scrollProgress} />
+      <DivineGlow scrollProgress={scrollProgress} />
+
+      {/* Deep space background */}
+      <mesh position={[0, 0, -30]}>
+        <planeGeometry args={[120, 80]} />
+        <meshBasicMaterial color="#050210" />
+      </mesh>
+    </>
+  );
+}
+
+// ==========================================
+// EXPORT
+// ==========================================
+export default function CosmicConstellation() {
+  const containerRef = useRef(null);
+  const scrollProgress = useRef(0);
+  const targetScroll = useRef(0);
+  const rafId = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const scrollParent = container.closest('.scrollable-container');
+    if (!scrollParent) return;
+
+    const handleScroll = () => {
+      const scrollTop = scrollParent.scrollTop;
+      const scrollHeight = scrollParent.scrollHeight - scrollParent.clientHeight;
+      if (scrollHeight > 0) {
+        targetScroll.current = Math.min(1, Math.max(0, scrollTop / scrollHeight));
+      }
+    };
+
+    const smoothLoop = () => {
+      scrollProgress.current += (targetScroll.current - scrollProgress.current) * 0.05;
+      rafId.current = requestAnimationFrame(smoothLoop);
+    };
+
+    scrollParent.addEventListener('scroll', handleScroll, { passive: true });
+    rafId.current = requestAnimationFrame(smoothLoop);
+
+    return () => {
+      scrollParent.removeEventListener('scroll', handleScroll);
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="sticky top-0 left-0 w-full h-screen z-0">
+        <Canvas
+          camera={{ position: [0, 1, 9], fov: 45 }}
+          dpr={[1, 1.5]}
+          gl={{ antialias: true, alpha: false }}
+        >
+          <color attach="background" args={['#050210']} />
+          <CosmicScene scrollProgress={scrollProgress} />
+        </Canvas>
+        <LetterOverlay scrollProgress={scrollProgress} />
+        <DivineTitle scrollProgress={scrollProgress} />
+      </div>
+
+      {/* Scroll driver */}
+      <div className="relative z-10 pointer-events-none">
+        <div className="h-[80vh]" />  {/* Initial — see the stars */}
+        <div className="h-[200vh]" /> {/* Lines connecting one by one + text */}
+        <div className="h-[100vh]" /> {/* Divine reveal */}
+        <div className="h-[40vh]" />  {/* Hold at the end */}
+      </div>
+    </div>
+  );
+}

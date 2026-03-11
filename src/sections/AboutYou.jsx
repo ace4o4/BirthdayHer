@@ -1,7 +1,40 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect } from 'react';
+import { useState, useRef } from 'react';
+import confetti from 'canvas-confetti';
 
-export default function AboutYou({ activeCardIndex }) {
+export default function AboutYou({ activeCardIndex, onWakeCat, isCatAwake }) {
+  const [isRabbitFlipping, setIsRabbitFlipping] = useState(false);
+  const rabbitRef = useRef(null);
+
+  const handleRabbitClick = () => {
+    setIsRabbitFlipping(true);
+    
+    // Normalize coordinates for confetti origin
+    let originX = 0.2;
+    let originY = 0.8;
+    
+    if (rabbitRef.current) {
+      const rect = rabbitRef.current.getBoundingClientRect();
+      originX = (rect.left + rect.width / 2) / window.innerWidth;
+      originY = (rect.top + rect.height / 2) / window.innerHeight;
+    }
+
+    // High-performance Particle Physics (Confetti) per PRD constraints
+    confetti({
+      particleCount: 65, // Moderate number 50-80
+      spread: 75, // Angle 60-90
+      origin: { x: originX, y: originY },
+      colors: ['#A0E8AF', '#D4F1E1', '#E8F5E9', '#b3e8c9', '#ffffff'], // Strictly pastel mint/green
+      startVelocity: 45,
+      decay: 0.9,
+      gravity: 1.2,
+      disableForReducedMotion: true,
+      zIndex: 200
+    });
+
+    // Reset flip state
+    setTimeout(() => setIsRabbitFlipping(false), 1000);
+  };
   const cards = [
     {
       title: "Super Cute",
@@ -50,19 +83,39 @@ export default function AboutYou({ activeCardIndex }) {
   return (
     <section className="min-h-screen py-24 bg-white/20 backdrop-blur-sm relative overflow-hidden flex flex-col justify-center">
       
-      {/* Decorative Stickers with micro-animations */}
-      <motion.img 
-        src="https://api.dicebear.com/8.x/fun-emoji/svg?seed=Felix" 
-        alt="cute emoji" 
-        whileHover={{ y: -10, scale: 1.2, rotate: [0, -10, 10, 0] }}
-        className="sticker top-10 right-10 w-20 h-20 animate-float-slow opacity-80 cursor-pointer" 
-      />
-      <motion.img 
-        src="https://api.dicebear.com/8.x/fun-emoji/svg?seed=Bella" 
-        alt="cute emoji" 
-        whileHover={{ y: -10, scale: 1.2, rotate: [0, 10, -10, 0] }}
-        className="sticker bottom-10 left-10 w-24 h-24 animate-float-fast opacity-80 cursor-pointer" 
-      />
+      {/* Interactive Sleeping Cat Easter Egg (Lerp triggering) */}
+      <AnimatePresence>
+        {!isCatAwake && (
+          <motion.div
+            initial={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0, border: 'none', transition: { duration: 0.3 } }} 
+            className="absolute top-10 right-10 z-[30] cursor-pointer"
+            onClick={onWakeCat}
+            whileHover={{ scale: 1.1 }}
+          >
+            <motion.div 
+               animate={{ y: [0, -5, 0] }} 
+               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+               className="relative"
+            >
+              <img src="https://api.dicebear.com/8.x/fun-emoji/svg?seed=Felix" alt="sleeping cat" className="w-20 h-20 opacity-80" />
+              <div className="absolute -top-4 -right-4 text-xs font-bold text-slate-500 animate-pulse bg-white/50 px-2 rounded-full backdrop-blur-sm pointer-events-none shadow-sm">Zzz...</div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Interactive Flipping Rabbit Easter Egg (Particle Physics) */}
+      <motion.div 
+        ref={rabbitRef}
+        onClick={handleRabbitClick}
+        animate={isRabbitFlipping ? { rotateY: 360, y: [-20, -100, 0], scale: 1.2 } : { rotateY: 0, y: 0, scale: 1 }}
+        transition={isRabbitFlipping ? { duration: 0.8, ease: "anticipate" } : {}}
+        whileHover={!isRabbitFlipping ? { scale: 1.2, rotate: [0, 10, -10, 0] } : {}}
+        className="absolute bottom-10 left-10 w-24 h-24 z-[30] cursor-pointer flex items-center justify-center opacity-90 drop-shadow-md bg-white/40 rounded-full backdrop-blur-sm border-2 border-white/50" 
+      >
+        <span className="text-5xl select-none">🐰</span>
+      </motion.div>
       <motion.div 
         whileHover={{ y: -10, scale: 1.3, rotate: 10 }}
         className="sticker top-1/2 left-4 text-5xl opacity-60 cursor-pointer"

@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Howl } from 'howler';
 
 import CakeSection from './sections/CakeSection';
 import HeroLetter from './sections/HeroLetter';
 import AboutYou from './sections/AboutYou';
-import MyThoughts from './sections/MyThoughts';
-import Gallery from './sections/Gallery';
+import CosmicConstellation from './components/CosmicConstellation';
+import MapGallery from './components/MapGallery';
 import WishesClimax from './sections/WishesClimax';
 import ParallaxBackground from './components/ParallaxBackground';
 
@@ -43,6 +44,73 @@ function App() {
 
   const totalSteps = 6;
   const totalAboutYouCards = 7;
+
+  // High-Performance Ambient Pet State
+  const [isCatAwake, setIsCatAwake] = useState(false);
+  const catRef = useRef(null);
+  
+  // Audio state
+  const meowSound = useRef(null);
+
+  useEffect(() => {
+    // Initialize Howler audio exactly as PRD requested
+    meowSound.current = new Howl({
+      src: ['https://cdn.freesound.org/previews/110/110011_1537434-lq.mp3'], // Reliable free cat meow
+      volume: 0.5,
+      preload: true
+    });
+  }, []);
+
+  const handleWakeCat = () => {
+    if (!isCatAwake) {
+      setIsCatAwake(true);
+    }
+    // Defensive playback: check if already playing to prevent overlap
+    if (meowSound.current && !meowSound.current.playing()) {
+      meowSound.current.play();
+    }
+  };
+
+  // Dedicated RequestAnimationFrame Loop for GPU-Accelerated Lerp Tracking
+  useEffect(() => {
+    if (!isCatAwake) return;
+
+    let targetX = -100;
+    let targetY = -100;
+    let currentX = -100;
+    let currentY = -100;
+    let animationFrameId;
+
+    const lerp = (start, end, amt) => (1 - amt) * start + amt * end;
+
+    const handleMouseMove = (e) => {
+      // Offset slightly to the right of the cursor
+      targetX = e.clientX + 20; 
+      targetY = e.clientY + 20;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+
+    const renderLoop = () => {
+      // Linear interpolation to calculate weighted acceleration
+      currentX = lerp(currentX, targetX, 0.08);
+      currentY = lerp(currentY, targetY, 0.08);
+
+      if (catRef.current) {
+        // Hardware Accelerated Transform
+        catRef.current.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      }
+
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+
+    renderLoop();
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isCatAwake]);
 
   // Handle wheel scrolling
   useEffect(() => {
@@ -159,14 +227,9 @@ function App() {
   const components = [
     <CakeSection onBlowCandles={() => setStep(1)} />,
     <HeroLetter />,
-    <AboutYou activeCardIndex={aboutYouCardIndex} />,
-    <MyThoughts />,
-    <div className="flex flex-col min-h-full">
-      <Gallery />
-      <footer className="py-8 bg-cute-yellow text-center text-slate-500 text-sm mt-auto">
-        <p>Made with ❤️ for someone special</p>
-      </footer>
-    </div>,
+    <AboutYou activeCardIndex={aboutYouCardIndex} onWakeCat={handleWakeCat} isCatAwake={isCatAwake} />,
+    <CosmicConstellation />,
+    <MapGallery />,
     <WishesClimax />
   ];
 
@@ -180,6 +243,22 @@ function App() {
   return (
     <div className="bg-[#e8f4f8] h-screen w-screen overflow-hidden text-slate-800 font-sans selection:bg-pink-300 selection:text-white relative">
       <ParallaxBackground globalProgress={globalProgress} />
+      
+      {/* Global Easter Egg: GPU Accelerated Cat */}
+      <AnimatePresence>
+        {isCatAwake && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="fixed top-0 left-0 z-[200] pointer-events-none drop-shadow-lg will-change-transform"
+          >
+            <div ref={catRef} className="absolute top-0 left-0">
+               <img src="https://api.dicebear.com/8.x/fun-emoji/svg?seed=Felix" alt="Following Cat" className="w-16 h-16 animate-bounce-slow" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
