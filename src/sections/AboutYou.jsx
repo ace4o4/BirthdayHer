@@ -43,18 +43,38 @@ export default function AboutYou({ activeCardIndex }) {
       title: "Absolutely Unique",
       desc: "There is truly no one else like you in the whole world. 🌟",
       icon: "💎",
-      color: "bg-cute-blue",
+      color: "bg-[#D4E6F1]", // soft blue
     }
   ];
 
   return (
-    <section className="min-h-screen py-24 bg-cute-blue relative overflow-hidden flex flex-col justify-center">
+    <section className="min-h-screen py-24 bg-white/20 backdrop-blur-sm relative overflow-hidden flex flex-col justify-center">
       
-      {/* Decorative Stickers */}
-      <img src="https://api.dicebear.com/8.x/fun-emoji/svg?seed=Felix" alt="cute emoji" className="sticker top-10 right-10 w-20 h-20 animate-float-slow opacity-80" />
-      <img src="https://api.dicebear.com/8.x/fun-emoji/svg?seed=Bella" alt="cute emoji" className="sticker bottom-10 left-10 w-24 h-24 animate-float-fast opacity-80" />
-      <div className="sticker top-1/2 left-4 text-5xl opacity-50">🍓</div>
-      <div className="sticker top-1/4 right-20 text-4xl opacity-50">🎀</div>
+      {/* Decorative Stickers with micro-animations */}
+      <motion.img 
+        src="https://api.dicebear.com/8.x/fun-emoji/svg?seed=Felix" 
+        alt="cute emoji" 
+        whileHover={{ y: -10, scale: 1.2, rotate: [0, -10, 10, 0] }}
+        className="sticker top-10 right-10 w-20 h-20 animate-float-slow opacity-80 cursor-pointer" 
+      />
+      <motion.img 
+        src="https://api.dicebear.com/8.x/fun-emoji/svg?seed=Bella" 
+        alt="cute emoji" 
+        whileHover={{ y: -10, scale: 1.2, rotate: [0, 10, -10, 0] }}
+        className="sticker bottom-10 left-10 w-24 h-24 animate-float-fast opacity-80 cursor-pointer" 
+      />
+      <motion.div 
+        whileHover={{ y: -10, scale: 1.3, rotate: 10 }}
+        className="sticker top-1/2 left-4 text-5xl opacity-60 cursor-pointer"
+      >
+        🍓
+      </motion.div>
+      <motion.div 
+        whileHover={{ y: -10, scale: 1.3, rotate: -10 }}
+        className="sticker top-1/4 right-20 text-4xl opacity-60 cursor-pointer"
+      >
+        🎀
+      </motion.div>
 
       <div className="container mx-auto px-6 relative z-20 flex-grow flex flex-col justify-center">
         <motion.div 
@@ -63,8 +83,8 @@ export default function AboutYou({ activeCardIndex }) {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <span className="text-pink-500 font-bold tracking-widest uppercase text-sm mb-2 block">All About You</span>
-          <h2 className="text-4xl md:text-5xl font-display font-bold text-slate-800">
+          <span className="text-pink-500 font-bold tracking-widest uppercase text-sm mb-2 block drop-shadow-sm">All About You</span>
+          <h2 className="text-4xl md:text-5xl font-display font-bold text-slate-800 drop-shadow-sm">
             Why You Are Special!
           </h2>
         </motion.div>
@@ -74,16 +94,16 @@ export default function AboutYou({ activeCardIndex }) {
           <AnimatePresence mode="popLayout">
             <motion.div
               key={activeCardIndex}
-              initial={{ opacity: 0, x: 100, scale: 0.9 }}
-              animate={{ opacity: 1, x: 0, scale: 1, zIndex: 10 }}
-              exit={{ opacity: 0, x: -100, scale: 0.9, zIndex: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className={`absolute inset-0 ${cards[activeCardIndex].color} rounded-[40px] p-8 shadow-xl border-4 border-white relative overflow-hidden flex flex-col items-center justify-center text-center`}
+              initial={{ opacity: 0, y: 100, scale: 0.8, rotate: -5 }}
+              animate={{ opacity: 1, y: 0, scale: 1, rotate: 0, zIndex: 10 }}
+              exit={{ opacity: 0, y: -100, scale: 0.8, rotate: 5, zIndex: 0 }}
+              transition={{ type: "spring", stiffness: 100, damping: 10, bounce: 0.5 }}
+              className={`absolute inset-0 ${cards[activeCardIndex].color} backdrop-blur-md bg-opacity-80 rounded-[40px] p-8 shadow-2xl border-4 border-white/70 relative overflow-hidden flex flex-col items-center justify-center text-center`}
             >
               {/* Card background blob */}
               <div className="absolute -right-6 -top-6 w-32 h-32 bg-white opacity-40 rounded-full blur-2xl"></div>
               
-              <div className="w-20 h-20 bg-white/80 rounded-full flex justify-center items-center text-4xl mb-6 shadow-sm border-2 border-white relative z-10">
+              <div className="w-20 h-20 bg-white/90 rounded-full flex justify-center items-center text-4xl mb-6 shadow-sm border-2 border-white relative z-10 transition-transform hover:scale-110 cursor-pointer">
                 {cards[activeCardIndex].icon}
               </div>
               <h3 className="text-3xl font-display font-bold text-slate-800 mb-4 relative z-10">{cards[activeCardIndex].title}</h3>
@@ -99,7 +119,7 @@ export default function AboutYou({ activeCardIndex }) {
           </AnimatePresence>
         </div>
         
-        <div className="text-center mt-8 text-slate-500 font-medium animate-pulse">
+        <div className="text-center mt-8 text-slate-600 font-bold animate-pulse drop-shadow-md bg-white/30 backdrop-blur-sm self-center px-4 py-2 rounded-full">
           Scroll down to see more! ✨
         </div>
       </div>

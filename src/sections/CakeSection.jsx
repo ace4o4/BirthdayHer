@@ -78,7 +78,7 @@ export default function CakeSection({ onBlowCandles }) {
   };
 
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center bg-cute-blue relative overflow-hidden">
+    <section className="min-h-screen flex flex-col items-center justify-center bg-white/20 backdrop-blur-sm relative overflow-hidden">
       {/* Background decorations */}
       <motion.div 
         animate={{ y: [0, -20, 0] }} 

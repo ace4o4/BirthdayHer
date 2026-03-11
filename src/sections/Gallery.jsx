@@ -11,7 +11,7 @@ export default function Gallery() {
   ];
 
   return (
-    <section className="py-24 bg-cute-yellow relative overflow-hidden">
+    <section className="py-24 bg-white/20 backdrop-blur-sm relative overflow-hidden">
       <div className="container mx-auto px-6">
         
         <motion.div 

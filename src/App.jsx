@@ -6,6 +6,8 @@ import HeroLetter from './sections/HeroLetter';
 import AboutYou from './sections/AboutYou';
 import MyThoughts from './sections/MyThoughts';
 import Gallery from './sections/Gallery';
+import WishesClimax from './sections/WishesClimax';
+import ParallaxBackground from './components/ParallaxBackground';
 
 const sectionVariants = {
   initial: {
@@ -39,7 +41,7 @@ function App() {
   const [isScrolling, setIsScrolling] = useState(false);
   const [aboutYouCardIndex, setAboutYouCardIndex] = useState(0);
 
-  const totalSteps = 5;
+  const totalSteps = 6;
   const totalAboutYouCards = 7;
 
   // Handle wheel scrolling
@@ -164,11 +166,20 @@ function App() {
       <footer className="py-8 bg-cute-yellow text-center text-slate-500 text-sm mt-auto">
         <p>Made with ❤️ for someone special</p>
       </footer>
-    </div>
+    </div>,
+    <WishesClimax />
   ];
 
+  // Calculate global progress for the parallax background (0.0 to 1.0)
+  let sectionProgress = 0;
+  if (step === 2) sectionProgress = aboutYouCardIndex / totalAboutYouCards;
+  
+  // The parallax spans from step 0 to step 5 (length 5)
+  const globalProgress = (step + sectionProgress) / 5;
+
   return (
-    <div className="bg-cute-blue h-screen w-screen overflow-hidden text-slate-800 font-sans selection:bg-pink-300 selection:text-white relative">
+    <div className="bg-[#e8f4f8] h-screen w-screen overflow-hidden text-slate-800 font-sans selection:bg-pink-300 selection:text-white relative">
+      <ParallaxBackground globalProgress={globalProgress} />
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
@@ -183,7 +194,7 @@ function App() {
       </AnimatePresence>
 
       {/* Navigation Indicators */}
-      {step > 0 && (
+      {step > 0 && step < 5 && (
         <div className="absolute right-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3">
           {[1, 2, 3, 4].map((i) => (
             <div 

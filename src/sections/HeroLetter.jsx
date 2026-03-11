@@ -38,7 +38,7 @@ export default function HeroLetter() {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#E0F2F1] to-[#E8F5E9] relative overflow-hidden py-20 cursor-pointer" onClick={handleOpen}>
+    <section className="min-h-screen flex items-center justify-center bg-white/20 backdrop-blur-sm relative overflow-hidden py-20 cursor-pointer" onClick={handleOpen}>
       
       {/* Canvas/Dotted Background Overlay */}
       <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(rgba(74, 85, 104, 0.15) 2px, transparent 2px)', backgroundSize: '24px 24px' }}></div>
