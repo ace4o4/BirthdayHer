@@ -60,6 +60,7 @@ const lines = [
 // ==========================================
 function BackgroundStars({ count = 3000 }) {
   const ref = useRef();
+  const elapsedRef = useRef(0);
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -70,9 +71,10 @@ function BackgroundStars({ count = 3000 }) {
     return pos;
   }, [count]);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!ref.current) return;
-    ref.current.rotation.y = state.clock.elapsedTime * 0.002;
+    ref.current.rotation.y = elapsedRef.current * 0.002;
   });
 
   return (
@@ -116,11 +118,13 @@ function NebulaClouds() {
 function DivineGlow({ scrollProgress }) {
   const glowRef = useRef();
   const raysRef = useRef();
+  const elapsedRef = useRef(0);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!glowRef.current) return;
     const p = scrollProgress.current;
-    const time = state.clock.elapsedTime;
+    const time = elapsedRef.current;
 
     // Glow appears after all lines are drawn (90%+)
     const glowProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));
@@ -159,11 +163,13 @@ function Constellation({ scrollProgress }) {
   const starMeshes = useRef([]);
   const glowMeshes = useRef([]);
   const lineRefs = useRef([]);
+  const elapsedRef = useRef(0);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!groupRef.current) return;
     const p = scrollProgress.current;
-    const time = state.clock.elapsedTime;
+    const time = elapsedRef.current;
     const totalLines = lines.length; // 9 lines
 
     // Each line occupies a portion of 5% to 90% scroll

@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { assetUrl } from '../utils/assetUrl';
 
 export default function WishesClimax() {
   const containerRef = useRef(null);
@@ -101,7 +102,7 @@ export default function WishesClimax() {
         onAnimationComplete={() => setHasLanded(true)}
       >
         <img 
-          src="/assets/girl_cutout_2.png" // The primary cutout over "HD"
+          src={assetUrl("/assets/girl_cutout_2.png")} // The primary cutout over "HD"
           alt="Birthday Girl" 
           className="max-h-[40vh] object-contain drop-shadow-xl" // Made larger to fit the new position
         />
@@ -116,7 +117,7 @@ export default function WishesClimax() {
          transition={{ type: "spring", stiffness: 60, damping: 15, delay: 1.2 }}
       >
         <img 
-          src="/assets/girl_cutout_1.png" // Set to be bigger and on the side
+          src={assetUrl("/assets/girl_cutout_1.png")} // Set to be bigger and on the side
           alt="Birthday Girl Alt" 
           className="max-h-[75vh] md:max-h-[85vh] lg:max-h-[90vh] object-contain drop-shadow-xl" // Increased max-height significantly
         />
@@ -131,7 +132,7 @@ export default function WishesClimax() {
          transition={{ type: "spring", stiffness: 70, damping: 16, delay: 1.5 }}
       >
         <img 
-          src="/assets/girl_cutout_3.png" // The new maroon jacket image
+          src={assetUrl("/assets/girl_cutout_3.png")} // The new maroon jacket image
           alt="Birthday Girl 3" 
           className="max-h-[40vh] md:max-h-[30vh] object-contain drop-shadow-2xl"
         />

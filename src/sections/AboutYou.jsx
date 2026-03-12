@@ -1,40 +1,41 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { assetUrl } from '../utils/assetUrl';
 
 const cards = [
   {
     title: "Super Cute",
     desc: "Inside and out, you radiate the cutest energy! 🐰",
-    icon: "/assets/icons/super_cute.png",
+    icon: assetUrl("/assets/icons/super_cute.png"),
   },
   {
     title: "Amazing Smile",
     desc: "Your smile lights up the whole room! 🌸",
-    icon: "/assets/icons/amazing_smile.png",
+    icon: assetUrl("/assets/icons/amazing_smile.png"),
   },
   {
     title: "Kind Heart",
     desc: "Always caring and bringing warmth everywhere. 🧸",
-    icon: "/assets/icons/kind_heart.png",
+    icon: assetUrl("/assets/icons/kind_heart.png"),
   },
   {
     title: "Brilliant Mind",
     desc: "So smart, creative, and always full of wonderful ideas! 💡",
-    icon: "/assets/icons/brilliant_mind.png",
+    icon: assetUrl("/assets/icons/brilliant_mind.png"),
   },
   {
     title: "Great Listener",
     desc: "Always there to listen and give the best advice. 🎧",
-    icon: "/assets/icons/great_listener.png",
+    icon: assetUrl("/assets/icons/great_listener.png"),
   },
   {
     title: "Fun Spirit",
     desc: "Every moment spent with you is filled with laughs and joy! 🎈",
-    icon: "/assets/icons/fun_spirit.png",
+    icon: assetUrl("/assets/icons/fun_spirit.png"),
   },
   {
     title: "Absolutely Unique",
     desc: "There is truly no one else like you in the whole world. 🌟",
-    icon: "/assets/icons/unique_diamond.png",
+    icon: assetUrl("/assets/icons/unique_diamond.png"),
   }
 ];
 
@@ -43,7 +44,7 @@ export default function AboutYou({ activeCardIndex }) {
     <section 
       className="min-h-screen py-24 relative overflow-hidden flex flex-col justify-center"
       style={{
-        backgroundImage: "url('/assets/back_1.jpg')",
+        backgroundImage: `url('${assetUrl('/assets/back_1.jpg')}')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundAttachment: "fixed",

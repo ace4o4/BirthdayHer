@@ -2,13 +2,14 @@ import { useRef, useEffect, useMemo, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
+import { assetUrl } from '../utils/assetUrl';
 
 // ==========================================
 // 3D MAP PLANE with the real map texture
 // ==========================================
 function MapPlane({ scrollProgress }) {
   const meshRef = useRef();
-  const texture = useTexture('/assets/map_texture.png');
+  const texture = useTexture(assetUrl('/assets/map_texture.png'));
 
   useFrame(() => {
     if (!meshRef.current) return;
@@ -49,11 +50,13 @@ const pinData = [
 function MemoryPin({ position, color, scrollProgress, index }) {
   const meshRef = useRef();
   const glowRef = useRef();
+  const elapsedRef = useRef(0);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!meshRef.current) return;
     const p = scrollProgress.current;
-    const time = state.clock.elapsedTime;
+    const time = elapsedRef.current;
 
     if (p < 0.35) {
       meshRef.current.visible = true;
@@ -92,14 +95,14 @@ function MemoryPin({ position, color, scrollProgress, index }) {
 // ==========================================
 // Put your photos in: public/assets/gallery/ named 1.jpg to 8.jpg
 const photos = [
-  { x: -2.5, y: 1.2, z: -12, ry: 0.12, label: 'By the Lake', color: '#fce7f3', img: '/assets/gallery/1.jpg' },
-  { x: 2.5, y: -0.5, z: -20, ry: -0.1, label: 'Morning View', color: '#dbeafe', img: '/assets/gallery/2.jpg' },
-  { x: -1.8, y: 0.6, z: -28, ry: 0.08, label: 'Peaceful Ganges', color: '#d1fae5', img: '/assets/gallery/3.jpg' },
-  { x: 3, y: 1, z: -36, ry: -0.12, label: 'Fresh Snow', color: '#ede9fe', img: '/assets/gallery/4.jpg' },
-  { x: -2.8, y: -0.3, z: -44, ry: 0.1, label: 'Rare Blooms', color: '#fef3c7', img: '/assets/gallery/5.jpg' },
-  { x: 1.5, y: 0.8, z: -52, ry: -0.08, label: 'Safari Day', color: '#fce7f3', img: '/assets/gallery/6.jpg' },
-  { x: -3, y: -0.8, z: -60, ry: 0.15, label: 'Sunset Magic', color: '#ccfbf1', img: '/assets/gallery/7.jpg' },
-  { x: 2.8, y: 0.4, z: -68, ry: -0.12, label: 'Valley Dreams', color: '#e0e7ff', img: '/assets/gallery/8.jpg' },
+  { x: -2.5, y: 1.2, z: -12, ry: 0.12, label: 'By the Lake', color: '#fce7f3', img: assetUrl('/assets/gallery/1.jpg') },
+  { x: 2.5, y: -0.5, z: -20, ry: -0.1, label: 'Morning View', color: '#dbeafe', img: assetUrl('/assets/gallery/2.jpg') },
+  { x: -1.8, y: 0.6, z: -28, ry: 0.08, label: 'Peaceful Ganges', color: '#d1fae5', img: assetUrl('/assets/gallery/3.jpg') },
+  { x: 3, y: 1, z: -36, ry: -0.12, label: 'Fresh Snow', color: '#ede9fe', img: assetUrl('/assets/gallery/4.jpg') },
+  { x: -2.8, y: -0.3, z: -44, ry: 0.1, label: 'Rare Blooms', color: '#fef3c7', img: assetUrl('/assets/gallery/5.jpg') },
+  { x: 1.5, y: 0.8, z: -52, ry: -0.08, label: 'Safari Day', color: '#fce7f3', img: assetUrl('/assets/gallery/6.jpg') },
+  { x: -3, y: -0.8, z: -60, ry: 0.15, label: 'Sunset Magic', color: '#ccfbf1', img: assetUrl('/assets/gallery/7.jpg') },
+  { x: 2.8, y: 0.4, z: -68, ry: -0.12, label: 'Valley Dreams', color: '#e0e7ff', img: assetUrl('/assets/gallery/8.jpg') },
 ];
 
 // Loads real image texture; must be used inside a <Suspense> boundary
@@ -115,11 +118,13 @@ function PhotoImage({ imgPath }) {
 
 function PhotoFrame({ position, rotationY, scrollProgress, index, color, img }) {
   const groupRef = useRef();
+  const elapsedRef = useRef(0);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!groupRef.current) return;
     const p = scrollProgress.current;
-    const time = state.clock.elapsedTime;
+    const time = elapsedRef.current;
 
     // Gallery starts at 45% scroll (after camera fully centered)
     const galleryProgress = Math.max(0, (p - 0.45) / 0.55);
@@ -196,6 +201,7 @@ function PhotoFrame({ position, rotationY, scrollProgress, index, color, img }) 
 // ==========================================
 function Particles({ count = 250 }) {
   const mesh = useRef();
+  const elapsedRef = useRef(0);
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -206,10 +212,11 @@ function Particles({ count = 250 }) {
     return pos;
   }, [count]);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!mesh.current) return;
-    mesh.current.rotation.y = state.clock.elapsedTime * 0.015;
-    mesh.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.008) * 0.05;
+    mesh.current.rotation.y = elapsedRef.current * 0.015;
+    mesh.current.rotation.x = Math.sin(elapsedRef.current * 0.008) * 0.05;
   });
 
   return (
@@ -265,9 +272,11 @@ function FloatingBokeh() {
 
 function BokehOrb({ pos, size, color, speed, index }) {
   const ref = useRef();
-  useFrame((state) => {
+  const elapsedRef = useRef(0);
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!ref.current) return;
-    const t = state.clock.elapsedTime;
+    const t = elapsedRef.current;
     ref.current.position.x = pos[0] + Math.sin(t * speed + index) * 0.8;
     ref.current.position.y = pos[1] + Math.sin(t * speed * 0.7 + index * 2) * 0.6;
   });
@@ -306,9 +315,11 @@ function FloatingShapes() {
 
 function FloatingShape({ pos, type, color, scale, index }) {
   const ref = useRef();
-  useFrame((state) => {
+  const elapsedRef = useRef(0);
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!ref.current) return;
-    const t = state.clock.elapsedTime;
+    const t = elapsedRef.current;
     ref.current.rotation.x = t * 0.3 + index;
     ref.current.rotation.z = t * 0.2 + index * 0.5;
     ref.current.position.y = pos[1] + Math.sin(t * 0.4 + index) * 0.5;
