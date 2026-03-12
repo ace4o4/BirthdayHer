@@ -10,6 +10,7 @@ function Cake3D({ isExtinguished }) {
   const flame1Ref = useRef();
   const flame2Ref = useRef();
   const flame3Ref = useRef();
+  const elapsedRef = useRef(0);
 
   // Precompute sprinkle rotations once to avoid Math.random() in render
   const sprinkleRotations = useMemo(
@@ -18,8 +19,9 @@ function Cake3D({ isExtinguished }) {
   );
 
   useFrame((state, delta) => {
+    elapsedRef.current += delta;
     // Flickering animation for flames when lit
-    const t = state.clock.getElapsedTime();
+    const t = elapsedRef.current;
     if (!isExtinguished) {
       const flicker1 = 1 + Math.sin(t * 10) * 0.1;
       const flicker2 = 1 + Math.cos(t * 12) * 0.1;

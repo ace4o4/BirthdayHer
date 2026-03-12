@@ -11,11 +11,13 @@ const MainEnvelope = ({ isSwirling, envelopeStep }) => {
   const groupRef = useRef();
   const flapRef = useRef();
   const cardRef = useRef();
+  const elapsedRef = useRef(0);
 
   // Hovering effect before swirl
-  useFrame((state) => {
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!isSwirling && groupRef.current) {
-      groupRef.current.position.y = Math.sin(state.clock.getElapsedTime() * 2) * 0.15;
+      groupRef.current.position.y = Math.sin(elapsedRef.current * 2) * 0.15;
     }
   });
 
