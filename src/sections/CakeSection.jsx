@@ -1,43 +1,250 @@
-import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Html, Cloud, Sparkles, Float, Cylinder, Cone, Sphere } from '@react-three/drei';
+import * as THREE from 'three';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Procedural 3D Cake Component
+function Cake3D({ isExtinguished }) {
+  // Candle flame refs for animation
+  const flame1Ref = useRef();
+  const flame2Ref = useRef();
+  const flame3Ref = useRef();
+
+  useFrame((state, delta) => {
+    // Flickering animation for flames when lit
+    const t = state.clock.getElapsedTime();
+    if (!isExtinguished) {
+      const flicker1 = 1 + Math.sin(t * 10) * 0.1;
+      const flicker2 = 1 + Math.cos(t * 12) * 0.1;
+      const flicker3 = 1 + Math.sin(t * 15) * 0.1;
+      
+      if (flame1Ref.current) flame1Ref.current.scale.set(flicker1, flicker1, flicker1);
+      if (flame2Ref.current) flame2Ref.current.scale.set(flicker2, flicker2, flicker2);
+      if (flame3Ref.current) flame3Ref.current.scale.set(flicker3, flicker3, flicker3);
+    } else {
+      // Epic Blow-out Animation
+      if (flame1Ref.current) {
+         // Bend backward from wind pressure, shrink rapidly, jitter violently
+         flame1Ref.current.rotation.x = THREE.MathUtils.lerp(flame1Ref.current.rotation.x, -Math.PI / 4, delta * 15);
+         flame1Ref.current.position.y = THREE.MathUtils.lerp(flame1Ref.current.position.y, 0.2, delta * 10);
+         flame1Ref.current.position.z = THREE.MathUtils.lerp(flame1Ref.current.position.z, -0.2, delta * 10);
+         flame1Ref.current.scale.lerp(new THREE.Vector3(0,0,0), delta * 5);
+      }
+      if (flame2Ref.current) {
+         flame2Ref.current.rotation.x = THREE.MathUtils.lerp(flame2Ref.current.rotation.x, -Math.PI / 4, delta * 15);
+         flame2Ref.current.position.y = THREE.MathUtils.lerp(flame2Ref.current.position.y, 0.2, delta * 10);
+         flame2Ref.current.position.z = THREE.MathUtils.lerp(flame2Ref.current.position.z, -0.2, delta * 10);
+         flame2Ref.current.scale.lerp(new THREE.Vector3(0,0,0), delta * 5);
+      }
+      if (flame3Ref.current) {
+         flame3Ref.current.rotation.x = THREE.MathUtils.lerp(flame3Ref.current.rotation.x, -Math.PI / 4, delta * 15);
+         flame3Ref.current.position.y = THREE.MathUtils.lerp(flame3Ref.current.position.y, 0.2, delta * 10);
+         flame3Ref.current.position.z = THREE.MathUtils.lerp(flame3Ref.current.position.z, -0.2, delta * 10);
+         flame3Ref.current.scale.lerp(new THREE.Vector3(0,0,0), delta * 5);
+      }
+    }
+  });
+
+  // Reusable candle component
+  const Candle = ({ position, flameRef }) => (
+    <group position={position}>
+      {/* Candle Body */}
+      <Cylinder args={[0.06, 0.06, 0.5, 16]} position={[0, 0.25, 0]}>
+        <meshStandardMaterial color="#fcd34d" roughness={0.7} />
+      </Cylinder>
+      {/* Wick */}
+      <Cylinder args={[0.01, 0.01, 0.1, 8]} position={[0, 0.55, 0]}>
+        <meshStandardMaterial color="#333333" roughness={0.9} />
+      </Cylinder>
+      
+      {/* Flame & Light (Wrapped in a group to allow the flame mesh itself to lean/animate) */}
+      <group position={[0, 0.7, 0]}>
+          <group ref={flameRef}>
+            {/* Outer Flame (Orange Glow) */}
+            <mesh position={[0, 0.05, 0]}>
+               <sphereGeometry args={[0.15, 16, 16]} />
+               <meshBasicMaterial color="#f97316" transparent opacity={0.4} blending={THREE.AdditiveBlending} depthWrite={false} />
+            </mesh>
+            {/* Inner Core Flame (White/Yellow) */}
+            <mesh position={[0, 0, 0]}>
+               <coneGeometry args={[0.06, 0.25, 16]} />
+               <meshBasicMaterial color="#ffffff" />
+            </mesh>
+            {/* Flame Base (Orange) */}
+            <mesh position={[0, -0.05, 0]}>
+               <sphereGeometry args={[0.06, 16, 16]} />
+               <meshBasicMaterial color="#fb923c" />
+            </mesh>
+            
+            {/* The light source attached to the flame */}
+            <pointLight intensity={isExtinguished ? 0 : 2} distance={6} decay={2} color="#fef08a" />
+          </group>
+          
+          {/* Smoke Puff when extinguished */}
+          {isExtinguished && (
+            <Sparkles 
+              count={20} 
+              scale={[0.4, 2, 0.4]} 
+              size={6} 
+              speed={0.8} 
+              opacity={0.3} 
+              color="#d4d4d8" 
+              position={[0, 1, 0]} 
+              noise={2}
+            />
+          )}
+      </group>
+    </group>
+  );
+
+  return (
+    <group position={[0, -1, 0]}>
+      {/* Plate */}
+      <Cylinder args={[2.5, 2.7, 0.2, 32]} position={[0, 0.1, 0]}>
+         <meshStandardMaterial color="#f8fafc" roughness={0.5} metalness={0.1} />
+      </Cylinder>
+
+      {/* Bottom Tier */}
+      <Cylinder args={[2, 2, 0.8, 32]} position={[0, 0.6, 0]}>
+         <meshStandardMaterial color="#fbcfe8" roughness={0.8} />
+      </Cylinder>
+
+      {/* Top Tier */}
+      <Cylinder args={[1.5, 1.5, 0.8, 32]} position={[0, 1.4, 0]}>
+         <meshStandardMaterial color="#f0fdf4" roughness={0.8} />
+      </Cylinder>
+      
+      {/* Icing/Frosting Details */}
+      <Cylinder args={[1.55, 1.55, 0.2, 32]} position={[0, 1.8, 0]}>
+         <meshStandardMaterial color="#ffffff" roughness={0.3} />
+      </Cylinder>
+
+      {/* Cute Frosting Dollops */}
+      {[...Array(8)].map((_, i) => (
+        <Sphere key={`dollop-${i}`} args={[0.2, 16, 16]} position={[
+          Math.cos((i * Math.PI) / 4) * 1.3,
+          1.9,
+          Math.sin((i * Math.PI) / 4) * 1.3
+        ]}>
+          <meshStandardMaterial color="#ffffff" roughness={0.3} />
+        </Sphere>
+      ))}
+
+      {/* Decorative Sprinkles on Bottom Tier */}
+      {[...Array(15)].map((_, i) => (
+        <Cylinder key={`sprinkle-${i}`} args={[0.03, 0.03, 0.15, 8]} position={[
+          Math.cos(i) * 2.02,
+          0.6 + Math.sin(i*3) * 0.3,
+          Math.sin(i) * 2.02
+        ]} rotation={[Math.random(), Math.random(), 0]}>
+           <meshStandardMaterial color={['#fef08a', '#60a5fa', '#f87171'][i%3]} />
+        </Cylinder>
+      ))}
+
+      {/* Candles */}
+      <Candle position={[-0.4, 1.9, 0.4]} flameRef={flame1Ref} />
+      <Candle position={[0.4, 1.9, 0.3]} flameRef={flame2Ref} />
+      <Candle position={[0, 1.9, -0.5]} flameRef={flame3Ref} />
+    </group>
+  );
+}
+
+// Minimal aesthetic lighting and environment
+function EnvironmentSetup({ isExtinguished }) {
+  const ambientRef = useRef();
+  const spotlightRef = useRef();
+  
+  useFrame((state, delta) => {
+     if (ambientRef.current) {
+        // Drop ambient light dramatically when candles go out
+        const targetIntensity = isExtinguished ? 0.05 : 0.8;
+        ambientRef.current.intensity = THREE.MathUtils.lerp(ambientRef.current.intensity, targetIntensity, delta * 2);
+     }
+     if (spotlightRef.current && isExtinguished) {
+        // Fade in a dramatic spotlight from above when it gets dark
+        spotlightRef.current.intensity = THREE.MathUtils.lerp(spotlightRef.current.intensity, 3, delta * 2);
+     }
+  });
+
+  return (
+    <>
+      <ambientLight ref={ambientRef} intensity={0.8} color="#ffffff" />
+      <spotLight ref={spotlightRef} position={[0, 10, 0]} angle={0.5} penumbra={0.5} intensity={0} color="#e0e7ff" castShadow />
+      
+      {/* Soft animated pastel skies */}
+      {!isExtinguished && (
+        <group position={[0, -5, -15]}>
+           <Cloud opacity={0.5} speed={0.4} width={10} depth={1.5} segments={20} color="#fce7f3" />
+        </group>
+      )}
+    </>
+  );
+}
+
 
 export default function CakeSection({ onBlowCandles }) {
   const [isBlowing, setIsBlowing] = useState(false);
-  const [candlesLit, setCandlesLit] = useState(true);
-  const [audioContext, setAudioContext] = useState(null);
-  const [analyser, setAnalyser] = useState(null);
-  const [microphone, setMicrophone] = useState(null);
+  const [isExtinguished, setIsExtinguished] = useState(false);
+  const [micError, setMicError] = useState(false);
+  
+  // Audio Refs
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const microphoneRef = useRef(null);
+  const animationFrameRef = useRef(null);
 
   useEffect(() => {
-    let animationFrameId;
+    // Longer warmup to completely bypass the hardware switch-on pop
+    let isWarmupComplete = false;
+    const warmupTimer = setTimeout(() => {
+      isWarmupComplete = true;
+    }, 2500);
 
-    if (isBlowing && analyser) {
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    // Auto-extinguish fallback timer (12 seconds)
+    // If the mic algorithm completely fails on their hardware, the cake will just gracefully blow out anyway so they aren't stuck.
+    const autoBlowTimer = setTimeout(() => {
+      if (isBlowing && !isExtinguished) {
+         triggerExtinguish();
+      }
+    }, 12000);
+
+    if (isBlowing && !isExtinguished && analyserRef.current) {
+      const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+      
       const checkVolume = () => {
-        analyser.getByteFrequencyData(dataArray);
-        
-        // Calculate average volume
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) {
-          sum += dataArray[i];
-        }
-        const averageVolume = sum / dataArray.length;
+        if (!isBlowing || isExtinguished) return;
 
-        // Threshold for blowing (adjust as needed, typically a loud noise like blowing reaches > 40-50)
-        if (averageVolume > 50) {
-          extinguishCandles();
-        } else {
-          animationFrameId = requestAnimationFrame(checkVolume);
+        analyserRef.current.getByteFrequencyData(dataArray);
+        
+        if (isWarmupComplete) {
+          let sum = 0;
+          let peak = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+            if (dataArray[i] > peak) peak = dataArray[i];
+          }
+          const averageVolume = sum / dataArray.length;
+
+          // Extreme Threshold: Only a high-pressure blow directly into the mic should hit > 230
+          if (peak > 230 || averageVolume > 60) {
+            triggerExtinguish();
+            return; // Stop looping
+          }
         }
+        
+        animationFrameRef.current = requestAnimationFrame(checkVolume);
       };
       
       checkVolume();
     }
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      clearTimeout(warmupTimer);
+      clearTimeout(autoBlowTimer);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [isBlowing, analyser]);
+  }, [isBlowing, isExtinguished]);
 
   const startListening = async () => {
     try {
@@ -49,144 +256,98 @@ export default function CakeSection({ onBlowCandles }) {
       analyserNode.fftSize = 256;
       source.connect(analyserNode);
 
-      setAudioContext(audioCtx);
-      setAnalyser(analyserNode);
-      setMicrophone(source);
+      audioContextRef.current = audioCtx;
+      analyserRef.current = analyserNode;
+      microphoneRef.current = source;
+      
       setIsBlowing(true);
+      setMicError(false);
     } catch (err) {
       console.error('Microphone access denied or not supported', err);
-      // Fallback: just allow clicking
-      alert("Microphone access is needed to blow the candles! But you can also just tap the cake.");
+      setMicError(true);
     }
   };
 
-  const extinguishCandles = () => {
-    setCandlesLit(false);
+  const triggerExtinguish = () => {
+    setIsExtinguished(true);
     setIsBlowing(false);
     
-    // Stop microphone access
-    if (microphone) {
-      microphone.mediaStream.getTracks().forEach(track => track.stop());
+    // Cleanup mic stream to save resources
+    if (microphoneRef.current) {
+      microphoneRef.current.mediaStream.getTracks().forEach(track => track.stop());
     }
-    if (audioContext) {
-      audioContext.close();
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
     }
 
+    // Pass control to the parent (App) after the "lights out" animation finishes (Phase 1 & 2 only)
     setTimeout(() => {
       onBlowCandles();
-    }, 2000); // Wait 2s before passing control back
+    }, 3000); 
   };
 
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center bg-white/20 backdrop-blur-sm relative overflow-hidden">
-      {/* Background decorations */}
-      <motion.div 
-        animate={{ y: [0, -20, 0] }} 
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-20 left-10 text-4xl opacity-50"
-      >
-        ✨
-      </motion.div>
-      <motion.div 
-        animate={{ y: [0, -30, 0] }} 
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute bottom-20 right-10 text-5xl opacity-50"
-      >
-        🎈
-      </motion.div>
+    <section 
+      className={`min-h-screen w-full relative overflow-hidden transition-colors duration-2000 ${isExtinguished ? 'bg-[#0f172a]' : 'bg-[#e8f4f8]'}`}
+      onClick={() => {
+        // Fallback: If they click anywhere while it's waiting for a blow, or if mic failed, extinguish manually
+        if (!isExtinguished) triggerExtinguish();
+      }}
+    >
+      
+      {/* 3D Canvas Layer */}
+      <div className="absolute inset-0 z-10 pointer-events-none">
+        <Canvas camera={{ position: [0, 2, 8], fov: 45 }}>
+          <EnvironmentSetup isExtinguished={isExtinguished} />
+          <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.5}>
+             <Cake3D isExtinguished={isExtinguished} />
+          </Float>
+        </Canvas>
+      </div>
 
-      <div className="z-10 text-center">
-        <h1 className="text-4xl md:text-5xl font-display text-slate-800 mb-8 drop-shadow-sm font-bold">
-          Happy Birthday!
-        </h1>
-        
-        {/* Cake Container */}
-        <motion.div 
-          className="relative cursor-pointer w-64 h-64 mx-auto"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            if (!isBlowing && candlesLit) {
-              extinguishCandles(); // Fallback on click
-            }
-          }}
-        >
-          {/* Cake SVG Graphic */}
-          <div className="absolute bottom-0 w-full flex justify-center flex-col items-center">
-            {/* Candles */}
-            <div className="flex space-x-4 mb-[-10px] z-20">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="relative">
-                  <div className="w-3 h-12 bg-pink-300 rounded-sm border-2 border-pink-400"></div>
-                  {/* The flame */}
-                  {candlesLit && (
-                    <motion.div 
-                      initial={{ scale: 1 }}
-                      animate={{ 
-                        scale: [1, 1.2, 0.9, 1.1, 1],
-                        rotate: [-5, 5, -3, 3, 0]
-                      }}
-                      transition={{ 
-                        repeat: Infinity, 
-                        duration: 0.5,
-                        delay: i * 0.1
-                      }}
-                      className="absolute -top-6 -left-1.5 w-6 h-8 bg-yellow-400 rounded-full"
-                      style={{ 
-                        boxShadow: '0 0 10px #facc15, 0 0 20px #fb923c',
-                        borderTopLeftRadius: '50%',
-                        borderTopRightRadius: '50%',
-                        borderBottomLeftRadius: '10px',
-                        borderBottomRightRadius: '10px'
-                      }}
-                    />
-                  )}
-                  {/* Smoke if extinguished */}
-                  {!candlesLit && (
-                    <motion.div 
-                      initial={{ opacity: 1, y: 0, scale: 0.5 }}
-                      animate={{ opacity: 0, y: -40, scale: 2 }}
-                      transition={{ duration: 1.5, ease: "easeOut" }}
-                      className="absolute -top-4 w-4 h-4 rounded-full bg-gray-300 filter blur-sm"
-                    />
-                  )}
+      {/* HTML UI Overlay Layer */}
+      <div className="absolute inset-x-0 bottom-20 z-20 flex flex-col items-center pointer-events-auto">
+        <AnimatePresence>
+          {!isExtinguished && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="text-center"
+            >
+              <h1 className="text-4xl md:text-5xl font-display text-slate-800 mb-8 drop-shadow-sm font-bold">
+                Happy Birthday!
+              </h1>
+              
+              {!isBlowing ? (
+                <button
+                  onClick={(e) => { e.stopPropagation(); startListening(); }}
+                  className="px-8 py-4 bg-white/80 backdrop-blur-md text-pink-600 font-bold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all outline-none border-2 border-pink-200"
+                >
+                  Click to make a wish & turn on Mic! 💨
+                </button>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-pink-600 font-bold text-xl animate-pulse">
+                    Waiting for a BIG blow into your mic... 😮💨
+                  </p>
+                  <p className="text-slate-500 text-sm font-medium">
+                    (or just tap anywhere if it's not working)
+                  </p>
                 </div>
-              ))}
-            </div>
-            
-            {/* Cake Base */}
-            <div className="w-56 h-20 bg-cute-pink rounded-t-xl border-4 border-pink-300 relative z-10 
-                            flex justify-center items-center overflow-hidden">
-               {/* Frosting Drips */}
-               <div className="absolute top-0 w-full h-8 bg-white opacity-80 rounded-b-xl" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 20%, 80% 100%, 60% 40%, 40% 100%, 20% 30%, 0 80%)'}}></div>
-            </div>
-            <div className="w-64 h-12 bg-pink-400 rounded-b-xl border-4 border-pink-500 shadow-lg"></div>
-          </div>
-        </motion.div>
+              )}
 
-        {candlesLit && (
-          <div className="mt-12 space-y-4">
-            {!isBlowing ? (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={startListening}
-                className="px-6 py-3 bg-white text-pink-500 font-bold rounded-full shadow-md hover:shadow-lg transition-shadow border-2 border-pink-200"
-              >
-                Make a wish & turn on Mic to blow! 💨
-              </motion.button>
-            ) : (
-              <motion.p 
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-                className="text-pink-600 font-bold text-lg"
-              >
-                Waiting for a big blow... 😮💨
-              </motion.p>
-            )}
-            <p className="text-gray-500 text-sm italic">Or just tap the cake to blow them out</p>
-          </div>
-        )}
+              {micError && (
+                <p className="text-red-500 mt-4 font-semibold text-sm">
+                  Mic access denied. Just tap the screen to blow them out!
+                </p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );

@@ -1,169 +1,126 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Howl } from 'howler';
 
 import CakeSection from './sections/CakeSection';
-import HeroLetter from './sections/HeroLetter';
+import MagicalEnvelopeReveal from './sections/MagicalEnvelopeReveal';
 import AboutYou from './sections/AboutYou';
 import CosmicConstellation from './components/CosmicConstellation';
 import MapGallery from './components/MapGallery';
 import WishesClimax from './sections/WishesClimax';
 import ParallaxBackground from './components/ParallaxBackground';
 
+// GPU-accelerated section transitions using transform + opacity only
+// (No clipPath — it triggers CPU-bound repaints and causes jank)
 const sectionVariants = {
   initial: {
-    clipPath: "circle(0% at 50% 100%)",
     opacity: 0,
-    zIndex: 20,
+    scale: 1.06,
+    y: 60,
+    filter: "blur(8px)",
   },
   animate: {
-    clipPath: "circle(150% at 50% 50%)",
     opacity: 1,
-    zIndex: 10,
+    scale: 1,
+    y: 0,
+    filter: "blur(0px)",
     transition: {
-      type: "spring",
-      stiffness: 20,
-      damping: 20,
-      duration: 1.5,
+      duration: 0.8,
+      ease: [0.25, 0.46, 0.45, 0.94], // easeOutQuad — smooth deceleration
     }
   },
   exit: {
     opacity: 0,
-    scale: 0.95,
-    zIndex: 0,
+    scale: 0.94,
+    y: -40,
+    filter: "blur(6px)",
     transition: {
-      duration: 0.8
+      duration: 0.5,
+      ease: [0.55, 0.085, 0.68, 0.53], // easeInQuad — smooth acceleration out
     }
   }
 };
 
+const TOTAL_STEPS = 6;
+const TOTAL_ABOUT_YOU_CARDS = 7;
+
+// Animation lock durations (ms) — scroll is blocked for this long after triggering
+const LOCK_SECTION_TRANSITION = 1200;   // Main section switch
+const LOCK_ENVELOPE_ANIM = 5000;        // Letter SVG handwriting animation (~4.5s)
+const LOCK_ENVELOPE_CLOSE = 1500;       // Closing the letter
+const LOCK_CARD_SLIDE = 600;            // AboutYou card carousel slide
+
 function App() {
   const [step, setStep] = useState(0);
-  const [isScrolling, setIsScrolling] = useState(false);
   const [aboutYouCardIndex, setAboutYouCardIndex] = useState(0);
-
-  const totalSteps = 6;
-  const totalAboutYouCards = 7;
-
-  // High-Performance Ambient Pet State
-  const [isCatAwake, setIsCatAwake] = useState(false);
-  const catRef = useRef(null);
   
-  // Audio state
-  const meowSound = useRef(null);
+  // Magical Envelope Reveal States
+  const [isSwirling, setIsSwirling] = useState(false);
+  const [envelopeStep, setEnvelopeStep] = useState(0);
 
-  useEffect(() => {
-    // Initialize Howler audio exactly as PRD requested
-    meowSound.current = new Howl({
-      src: ['https://cdn.freesound.org/previews/110/110011_1537434-lq.mp3'], // Reliable free cat meow
-      volume: 0.5,
-      preload: true
-    });
+  // Scroll lock ref — using ref instead of state to avoid re-renders and stale closures
+  const scrollLocked = useRef(false);
+
+  const lockScroll = useCallback((durationMs) => {
+    scrollLocked.current = true;
+    setTimeout(() => { scrollLocked.current = false; }, durationMs);
   }, []);
-
-  const handleWakeCat = () => {
-    if (!isCatAwake) {
-      setIsCatAwake(true);
-    }
-    // Defensive playback: check if already playing to prevent overlap
-    if (meowSound.current && !meowSound.current.playing()) {
-      meowSound.current.play();
-    }
-  };
-
-  // Dedicated RequestAnimationFrame Loop for GPU-Accelerated Lerp Tracking
-  useEffect(() => {
-    if (!isCatAwake) return;
-
-    let targetX = -100;
-    let targetY = -100;
-    let currentX = -100;
-    let currentY = -100;
-    let animationFrameId;
-
-    const lerp = (start, end, amt) => (1 - amt) * start + amt * end;
-
-    const handleMouseMove = (e) => {
-      // Offset slightly to the right of the cursor
-      targetX = e.clientX + 20; 
-      targetY = e.clientY + 20;
-    };
-
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-
-    const renderLoop = () => {
-      // Linear interpolation to calculate weighted acceleration
-      currentX = lerp(currentX, targetX, 0.08);
-      currentY = lerp(currentY, targetY, 0.08);
-
-      if (catRef.current) {
-        // Hardware Accelerated Transform
-        catRef.current.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
-      }
-
-      animationFrameId = requestAnimationFrame(renderLoop);
-    };
-
-    renderLoop();
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [isCatAwake]);
 
   // Handle wheel scrolling
   useEffect(() => {
     const handleWheel = (e) => {
-      // Don't allow scroll out of cake section until blown
-      if (step === 0) return;
-      if (isScrolling) return;
+      // Block all scrolling on step 0 (cake) and when animations are active
+      if (step === 0 || scrollLocked.current) return;
 
+      // Allow internal scrollable containers to scroll normally
       const target = e.target.closest('.scrollable-container');
       if (target) {
-        // If scrolling down and not at bottom, allow
-        if (e.deltaY > 0 && target.scrollTop + target.clientHeight < target.scrollHeight - 1) {
-           return; 
+        if (e.deltaY > 0 && target.scrollTop + target.clientHeight < target.scrollHeight - 1) return;
+        if (e.deltaY < 0 && target.scrollTop > 0) return;
+      }
+
+      const delta = e.deltaY;
+
+      // Magical Envelope internal scroll
+      if (step === 1) {
+        if (delta > 30 && envelopeStep < 1 && isSwirling) {
+          lockScroll(LOCK_ENVELOPE_ANIM); // Lock for full letter animation
+          setEnvelopeStep(1);
+          return;
         }
-        // If scrolling up and not at top, allow
-        if (e.deltaY < 0 && target.scrollTop > 0) {
-           return; 
+        if (delta < -30 && envelopeStep > 0) {
+          lockScroll(LOCK_ENVELOPE_CLOSE);
+          setEnvelopeStep(0);
+          return;
         }
       }
 
-      // Handle custom internal scrolling for AboutYou section
+      // AboutYou card carousel scroll
       if (step === 2) {
-        if (e.deltaY > 30) {
-          if (aboutYouCardIndex < totalAboutYouCards - 1) {
-            setIsScrolling(true);
-            setAboutYouCardIndex(prev => prev + 1);
-            setTimeout(() => setIsScrolling(false), 800); // Shorter debounce for slider
-            return;
-          }
-        } else if (e.deltaY < -30) {
-          if (aboutYouCardIndex > 0) {
-            setIsScrolling(true);
-            setAboutYouCardIndex(prev => prev - 1);
-            setTimeout(() => setIsScrolling(false), 800);
-            return;
-          }
+        if (delta > 30 && aboutYouCardIndex < TOTAL_ABOUT_YOU_CARDS - 1) {
+          lockScroll(LOCK_CARD_SLIDE);
+          setAboutYouCardIndex(prev => prev + 1);
+          return;
+        }
+        if (delta < -30 && aboutYouCardIndex > 0) {
+          lockScroll(LOCK_CARD_SLIDE);
+          setAboutYouCardIndex(prev => prev - 1);
+          return;
         }
       }
 
-      if (e.deltaY > 30 && step < totalSteps - 1) {
-        setIsScrolling(true);
+      // Main section transitions
+      if (delta > 30 && step < TOTAL_STEPS - 1) {
+        lockScroll(LOCK_SECTION_TRANSITION);
         setStep(prev => prev + 1);
-        setTimeout(() => setIsScrolling(false), 2000); // Main section transition debounce
-      } else if (e.deltaY < -30 && step > 1) { // Prevents going back to cake
-        setIsScrolling(true);
+      } else if (delta < -30 && step > 1) {
+        lockScroll(LOCK_SECTION_TRANSITION);
         setStep(prev => prev - 1);
-        setTimeout(() => setIsScrolling(false), 2000);
       }
     };
 
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleWheel);
-  }, [step, isScrolling, aboutYouCardIndex]);
+  }, [step, aboutYouCardIndex, envelopeStep, isSwirling, lockScroll]);
 
   // Handle touch interactions
   useEffect(() => {
@@ -174,44 +131,48 @@ function App() {
     };
     
     const handleTouchEnd = (e) => {
-      if (step === 0) return;
-      if (isScrolling) return;
+      if (step === 0 || scrollLocked.current) return;
       
       const target = e.target.closest('.scrollable-container');
-      if (target) {
-        return; 
-      }
+      if (target) return;
       
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaY = touchStartY - touchEndY;
+      const deltaY = touchStartY - e.changedTouches[0].clientY;
 
-      // Handle custom internal swipe for AboutYou section
+      // Magical Envelope internal swipe
+      if (step === 1) {
+        if (deltaY > 40 && envelopeStep < 1 && isSwirling) {
+          lockScroll(LOCK_ENVELOPE_ANIM);
+          setEnvelopeStep(1);
+          return;
+        }
+        if (deltaY < -40 && envelopeStep > 0) {
+          lockScroll(LOCK_ENVELOPE_CLOSE);
+          setEnvelopeStep(0);
+          return;
+        }
+      }
+
+      // AboutYou card carousel swipe
       if (step === 2) {
-        if (deltaY > 40) {
-          if (aboutYouCardIndex < totalAboutYouCards - 1) {
-            setIsScrolling(true);
-            setAboutYouCardIndex(prev => prev + 1);
-            setTimeout(() => setIsScrolling(false), 800);
-            return;
-          }
-        } else if (deltaY < -40) {
-          if (aboutYouCardIndex > 0) {
-            setIsScrolling(true);
-            setAboutYouCardIndex(prev => prev - 1);
-            setTimeout(() => setIsScrolling(false), 800);
-            return;
-          }
+        if (deltaY > 40 && aboutYouCardIndex < TOTAL_ABOUT_YOU_CARDS - 1) {
+          lockScroll(LOCK_CARD_SLIDE);
+          setAboutYouCardIndex(prev => prev + 1);
+          return;
+        }
+        if (deltaY < -40 && aboutYouCardIndex > 0) {
+          lockScroll(LOCK_CARD_SLIDE);
+          setAboutYouCardIndex(prev => prev - 1);
+          return;
         }
       }
       
-      if (deltaY > 50 && step < totalSteps - 1) {
-        setIsScrolling(true);
+      // Main section transitions
+      if (deltaY > 50 && step < TOTAL_STEPS - 1) {
+        lockScroll(LOCK_SECTION_TRANSITION);
         setStep(prev => prev + 1);
-        setTimeout(() => setIsScrolling(false), 2000);
       } else if (deltaY < -50 && step > 1) {
-        setIsScrolling(true);
+        lockScroll(LOCK_SECTION_TRANSITION);
         setStep(prev => prev - 1);
-        setTimeout(() => setIsScrolling(false), 2000);
       }
     };
     
@@ -222,42 +183,29 @@ function App() {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [step, isScrolling, aboutYouCardIndex]);
+  }, [step, aboutYouCardIndex, envelopeStep, isSwirling, lockScroll]);
 
   const components = [
     <CakeSection onBlowCandles={() => setStep(1)} />,
-    <HeroLetter />,
-    <AboutYou activeCardIndex={aboutYouCardIndex} onWakeCat={handleWakeCat} isCatAwake={isCatAwake} />,
+    <MagicalEnvelopeReveal 
+        envelopeStep={envelopeStep} 
+        isSwirling={isSwirling} 
+        setIsSwirling={setIsSwirling} 
+    />,
+    <AboutYou activeCardIndex={aboutYouCardIndex} />,
     <CosmicConstellation />,
     <MapGallery />,
     <WishesClimax />
   ];
 
-  // Calculate global progress for the parallax background (0.0 to 1.0)
+  // Calculate global progress for parallax background (0.0 to 1.0)
   let sectionProgress = 0;
-  if (step === 2) sectionProgress = aboutYouCardIndex / totalAboutYouCards;
-  
-  // The parallax spans from step 0 to step 5 (length 5)
-  const globalProgress = (step + sectionProgress) / 5;
+  if (step === 2) sectionProgress = aboutYouCardIndex / TOTAL_ABOUT_YOU_CARDS;
+  const globalProgress = (step + sectionProgress) / (TOTAL_STEPS - 1);
 
   return (
     <div className="bg-[#e8f4f8] h-screen w-screen overflow-hidden text-slate-800 font-sans selection:bg-pink-300 selection:text-white relative">
       <ParallaxBackground globalProgress={globalProgress} />
-      
-      {/* Global Easter Egg: GPU Accelerated Cat */}
-      <AnimatePresence>
-        {isCatAwake && (
-          <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="fixed top-0 left-0 z-[200] pointer-events-none drop-shadow-lg will-change-transform"
-          >
-            <div ref={catRef} className="absolute top-0 left-0">
-               <img src="https://api.dicebear.com/8.x/fun-emoji/svg?seed=Felix" alt="Following Cat" className="w-16 h-16 animate-bounce-slow" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -266,7 +214,7 @@ function App() {
           initial="initial"
           animate="animate"
           exit="exit"
-          className="scrollable-container absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden"
+          className="scrollable-container absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden will-change-transform"
         >
           {components[step]}
         </motion.div>
@@ -284,15 +232,15 @@ function App() {
         </div>
       )}
 
-      {/* Scroll indicator hint */}
-      {step === 1 && !isScrolling && (
+      {/* Scroll indicator hint for step 1 */}
+      {step === 1 && !scrollLocked.current && isSwirling && envelopeStep === 0 && (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, y: [0, 10, 0] }}
           transition={{ delay: 3, duration: 2, repeat: Infinity }}
           className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 text-slate-500 font-bold bg-white/70 px-4 py-2 rounded-full shadow-sm backdrop-blur-sm pointer-events-none"
         >
-          Scroll Down to Continue ↓
+          Scroll Down to Read Letter ↓
         </motion.div>
       )}
     </div>

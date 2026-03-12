@@ -6,50 +6,53 @@ import * as THREE from 'three';
 // LETTER SEGMENTS — one per connection phase
 // ==========================================
 const letterSegments = [
-  "From the first day I talked to you, I knew there was something special about you. Your laugh, your stubborn cuteness — everything lights up my world.",
-  "Your kindness, your energy, the way you fight through everything silently — I see it all. You are the strongest soul I know.",
-  "You deserve the entire universe and more. Never forget how truly amazing you are.",
+  "From the first day I talked to you, I knew there was something special about you.",
+  "Your laugh, your stubborn cuteness — everything lights up my world.",
+  "Your kindness, your energy, the way you fight through everything silently — I see it all.",
+  "You are the strongest, most beautiful soul I know.",
+  "You deserve the entire universe and more.",
   "I promise to be there through every storm and every sunrise.",
   "I promise to make you laugh when the world feels heavy.",
   "I promise to protect your peace, your dreams, and your happiness.",
-  "You are my peace in this chaotic universe.",
-  "Happy Birthday, my forever person. 🌸",
+  "You are my peace in this chaotic universe. Happy Birthday, my forever person. 🌸",
   "— with all my love, always ✦",
 ];
 
 // ==========================================
-// LEO CONSTELLATION — matching reference image shape
-// Wider horizontal layout: body quad + head Y-fork
+// PURVA PHALGUNI CONSTELLATION — exact reference match
+// Compact body trapezoid + small head Y-fork
 // ==========================================
 const stars = [
-  // Body — wide quadrilateral
-  { x: -4.5, y: -1.0, name: 'Denebola', bright: false },  // 0 — β tail (far left)
-  { x: -2.0, y:  0.8, name: 'Zosma', bright: false },      // 1 — δ upper-left body
-  { x: -1.5, y: -1.2, name: 'Chertan', bright: false },    // 2 — θ lower body
-  { x:  1.0, y:  0.8, name: 'Algieba', bright: false },    // 3 — γ center-upper
-  { x:  1.5, y: -0.5, name: 'Al Jabhah', bright: false },  // 4 — η center-lower
-  { x:  3.5, y: -1.5, name: 'Regulus', bright: true },     // 5 — α BRIGHTEST (front paw)
-  // Head — Y-fork going up-right
-  { x:  2.0, y:  2.0, name: 'Adhafera', bright: false },   // 6 — ζ head base
-  { x:  3.0, y:  3.5, name: 'Ras Elased', bright: false }, // 7 — μ head top
-  { x:  4.0, y:  3.2, name: 'epsilon', bright: false },    // 8 — ε fork right
-  { x:  3.8, y:  2.2, name: 'Alterf', bright: false },     // 9 — λ fork down-right
+  // Left — triangle
+  { x: -3.0, y: -0.99, name: 'Denebola', bright: false },  // 0 — far-left (tail)
+  { x: -1.3, y:  0.4, name: 'Zosma', bright: true },       // 1 — RED star (upper-left body)
+  { x: -1, y: -0.7, name: 'Chertan', bright: false },    // 2 — lower-left body
+
+  // Body — center
+  { x:  0.9, y:  0.6, name: 'Algieba', bright: false },    // 3 — center-upper
+  { x:  1.6, y: 0.01, name: 'Al Jabhah', bright: false },  // 4 — center-right body
+
+  // Right — bottom
+  { x:  1.8, y: -0.8, name: 'Regulus', bright: false },    // 5 — far-right bottom
+
+  // Head — compact Y-fork
+  { x:  0.9, y:  1.4, name: 'Adhafera', bright: false },   // 6 — head base (neck)
+  { x:  1.8, y:  2.5, name: 'Ras Elased', bright: false }, // 7 — head top
+  { x:  2.4, y:  2.1, name: 'Alterf', bright: false },     // 8 — fork right
 ];
 
-// Lines connecting stars — drawn ONE BY ONE on scroll
+// Lines — drawn ONE BY ONE as you scroll
 const lines = [
-  // Body quadrilateral
-  [0, 1],  // Denebola → Zosma (left top edge)
-  [0, 2],  // Denebola → Chertan (left bottom edge)
-  [1, 3],  // Zosma → Algieba (top edge)
-  [2, 4],  // Chertan → Al Jabhah (bottom edge)
-  [3, 4],  // Algieba → Al Jabhah (right side of body)
-  [4, 5],  // Al Jabhah → Regulus (front leg)
-  // Head
-  [3, 6],  // Algieba → Adhafera (neck)
-  [6, 7],  // Adhafera → Ras Elased (head up)
-  [7, 8],  // Ras Elased → epsilon (fork right)
-  [7, 9],  // Ras Elased → Alterf (fork down-right) — NOT USED, only 9 text segments
+  [0, 1],  // tail → red star (left diagonal up)
+  [0, 2],  // tail → lower-left (left side down)
+  [1, 3],  // red star → center upper (top body line)
+  [1, 2],  // red star → lower-left (closes left triangle)
+  [3, 4],  // center → right body (upper-right)
+  [4, 5],  // right body → bottom-right (down diagonal)
+  [2, 5],  // lower-left → bottom-right (long bottom line)
+  [3, 6],  // center → head base (neck going up)
+  [6, 7],  // head base → head top
+  [7, 8],  // head top → fork right
 ];
 
 // ==========================================
@@ -498,12 +501,12 @@ export default function CosmicConstellation() {
         <DivineTitle scrollProgress={scrollProgress} />
       </div>
 
-      {/* Scroll driver */}
+      {/* Scroll driver — LONG so each line has reading time */}
       <div className="relative z-10 pointer-events-none">
-        <div className="h-[80vh]" />  {/* Initial — see the stars */}
-        <div className="h-[200vh]" /> {/* Lines connecting one by one + text */}
-        <div className="h-[100vh]" /> {/* Divine reveal */}
-        <div className="h-[40vh]" />  {/* Hold at the end */}
+        <div className="h-[120vh]" />  {/* Initial — see the stars */}
+        <div className="h-[500vh]" /> {/* Lines connecting one by one + text */}
+        <div className="h-[180vh]" /> {/* Divine reveal */}
+        <div className="h-[80vh]" />  {/* Hold at the end */}
       </div>
     </div>
   );
