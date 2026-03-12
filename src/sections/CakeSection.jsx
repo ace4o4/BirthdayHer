@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, Cloud, Sparkles, Float, Cylinder, Cone, Sphere } from '@react-three/drei';
 import * as THREE from 'three';
@@ -10,6 +10,12 @@ function Cake3D({ isExtinguished }) {
   const flame1Ref = useRef();
   const flame2Ref = useRef();
   const flame3Ref = useRef();
+
+  // Precompute sprinkle rotations once to avoid Math.random() in render
+  const sprinkleRotations = useMemo(
+    () => Array.from({ length: 15 }, () => [Math.random() * Math.PI, Math.random() * Math.PI, 0]), // eslint-disable-line react-hooks/purity
+    []
+  );
 
   useFrame((state, delta) => {
     // Flickering animation for flames when lit
@@ -137,7 +143,7 @@ function Cake3D({ isExtinguished }) {
           Math.cos(i) * 2.02,
           0.6 + Math.sin(i*3) * 0.3,
           Math.sin(i) * 2.02
-        ]} rotation={[Math.random(), Math.random(), 0]}>
+        ]} rotation={sprinkleRotations[i]}>
            <meshStandardMaterial color={['#fef08a', '#60a5fa', '#f87171'][i%3]} />
         </Cylinder>
       ))}
@@ -194,6 +200,27 @@ export default function CakeSection({ onBlowCandles }) {
   const microphoneRef = useRef(null);
   const animationFrameRef = useRef(null);
 
+  const triggerExtinguish = useCallback(() => {
+    setIsExtinguished(true);
+    setIsBlowing(false);
+    
+    // Cleanup mic stream to save resources
+    if (microphoneRef.current) {
+      microphoneRef.current.mediaStream.getTracks().forEach(track => track.stop());
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    // Pass control to the parent (App) after the "lights out" animation finishes (Phase 1 & 2 only)
+    setTimeout(() => {
+      onBlowCandles();
+    }, 3000); 
+  }, [onBlowCandles]);
+
   useEffect(() => {
     // Longer warmup to completely bypass the hardware switch-on pop
     let isWarmupComplete = false;
@@ -244,7 +271,7 @@ export default function CakeSection({ onBlowCandles }) {
       clearTimeout(autoBlowTimer);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [isBlowing, isExtinguished]);
+  }, [isBlowing, isExtinguished, triggerExtinguish]);
 
   const startListening = async () => {
     try {
@@ -266,27 +293,6 @@ export default function CakeSection({ onBlowCandles }) {
       console.error('Microphone access denied or not supported', err);
       setMicError(true);
     }
-  };
-
-  const triggerExtinguish = () => {
-    setIsExtinguished(true);
-    setIsBlowing(false);
-    
-    // Cleanup mic stream to save resources
-    if (microphoneRef.current) {
-      microphoneRef.current.mediaStream.getTracks().forEach(track => track.stop());
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-    }
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    // Pass control to the parent (App) after the "lights out" animation finishes (Phase 1 & 2 only)
-    setTimeout(() => {
-      onBlowCandles();
-    }, 3000); 
   };
 
   return (

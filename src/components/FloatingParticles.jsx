@@ -6,12 +6,16 @@ export default function FloatingParticles({ count = 30 }) {
   const particles = useMemo(() => {
     return Array.from({ length: count }).map((_, i) => ({
       id: i,
-      x: Math.random() * 100, // % width
-      y: Math.random() * 100, // % height
-      size: Math.random() * 8 + 4, // 4px to 12px
-      duration: Math.random() * 15 + 10, // 10s to 25s
-      delay: Math.random() * 10, // 0 to 10s start delay
-      opacity: Math.random() * 0.4 + 0.1, // 0.1 to 0.5 opacity
+      x: Math.random() * 100, // eslint-disable-line react-hooks/purity
+      y: Math.random() * 100, // eslint-disable-line react-hooks/purity
+      size: Math.random() * 8 + 4, // eslint-disable-line react-hooks/purity
+      duration: Math.random() * 15 + 10, // eslint-disable-line react-hooks/purity
+      delay: Math.random() * 10, // eslint-disable-line react-hooks/purity
+      opacity: Math.random() * 0.4 + 0.1, // eslint-disable-line react-hooks/purity
+      animX1: Math.random() * 100 - 50, // eslint-disable-line react-hooks/purity
+      animX2: Math.random() * 100 - 50, // eslint-disable-line react-hooks/purity
+      animY1: Math.random() * -100 - 50, // eslint-disable-line react-hooks/purity
+      animY2: Math.random() * -100 - 50, // eslint-disable-line react-hooks/purity
     }));
   }, [count]);
 
@@ -30,8 +34,8 @@ export default function FloatingParticles({ count = 30 }) {
             boxShadow: '0 0 10px 2px rgba(255, 255, 255, 0.4)',
           }}
           animate={{
-            x: [0, Math.random() * 100 - 50, Math.random() * 100 - 50, 0],
-            y: [0, Math.random() * -100 - 50, Math.random() * -100 - 50, 0],
+            x: [0, p.animX1, p.animX2, 0],
+            y: [0, p.animY1, p.animY2, 0],
             opacity: [p.opacity, p.opacity * 2, p.opacity * 0.5, p.opacity],
             scale: [1, 1.5, 0.8, 1],
           }}

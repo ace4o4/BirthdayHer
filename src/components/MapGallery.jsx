@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect, useMemo, Suspense } from 'react';
-import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
+import { useRef, useEffect, useMemo, Suspense } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -102,31 +102,18 @@ const photos = [
   { x: 2.8, y: 0.4, z: -68, ry: -0.12, label: 'Valley Dreams', color: '#e0e7ff', img: '/assets/gallery/8.jpg' },
 ];
 
-// Loads real image texture, falls back to color if missing
-function PhotoImage({ imgPath, color }) {
-  let texture = null;
-  try {
-    texture = useTexture(imgPath);
-  } catch (e) {
-    texture = null;
-  }
-  if (texture) {
-    return (
-      <mesh position={[0, 0.05, 0]}>
-        <planeGeometry args={[2.3, 1.7]} />
-        <meshBasicMaterial map={texture} transparent />
-      </mesh>
-    );
-  }
+// Loads real image texture; must be used inside a <Suspense> boundary
+function PhotoImage({ imgPath }) {
+  const texture = useTexture(imgPath);
   return (
     <mesh position={[0, 0.05, 0]}>
       <planeGeometry args={[2.3, 1.7]} />
-      <meshStandardMaterial color={color} transparent />
+      <meshBasicMaterial map={texture} transparent />
     </mesh>
   );
 }
 
-function PhotoFrame({ position, rotationY, scrollProgress, index, label, color, img }) {
+function PhotoFrame({ position, rotationY, scrollProgress, index, color, img }) {
   const groupRef = useRef();
 
   useFrame((state) => {
@@ -188,7 +175,7 @@ function PhotoFrame({ position, rotationY, scrollProgress, index, label, color, 
           <meshStandardMaterial color={color} transparent />
         </mesh>
       }>
-        <PhotoImage imgPath={img} color={color} />
+        <PhotoImage imgPath={img} />
       </Suspense>
       {/* Cute tape on top */}
       <mesh position={[0, 1.0, 0.02]} rotation={[0, 0, 0.06]}>
@@ -212,9 +199,9 @@ function Particles({ count = 250 }) {
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 30;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 15;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 80 - 10;
+      pos[i * 3] = (Math.random() - 0.5) * 30; // eslint-disable-line react-hooks/purity
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 15; // eslint-disable-line react-hooks/purity
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 80 - 10; // eslint-disable-line react-hooks/purity
     }
     return pos;
   }, [count]);
@@ -349,7 +336,7 @@ function CameraController({ scrollProgress }) {
 
     if (p < 0.4) {
       const mapP = p / 0.4;
-      camera.position.x = mapP * 1;
+      camera.position.x = mapP * 1; // eslint-disable-line react-hooks/immutability
       camera.position.y = 6 - mapP * 2;
       camera.position.z = 6 - mapP * 3;
       camera.lookAt(0, -1 + mapP * 2, -mapP * 5);

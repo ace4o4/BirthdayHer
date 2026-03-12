@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState, useLayoutEffect } from 'react';
+import React, { useRef, useMemo, useLayoutEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Instances, Instance, Environment, Float } from '@react-three/drei';
 import * as THREE from 'three';
@@ -134,20 +134,20 @@ const Swarm = ({ isSwirling }) => {
     
     for (let i = 0; i < count; i++) {
         // Initial hidden spawn position behind the main envelope
-        const x = (Math.random() - 0.5) * 0.2;
-        const y = (Math.random() - 0.5) * 0.2;
-        const z = -0.5 + (Math.random() - 0.5) * 0.2;
+        const x = (Math.random() - 0.5) * 0.2; // eslint-disable-line react-hooks/purity
+        const y = (Math.random() - 0.5) * 0.2; // eslint-disable-line react-hooks/purity
+        const z = -0.5 + (Math.random() - 0.5) * 0.2; // eslint-disable-line react-hooks/purity
         
-        const color = pastelColors[Math.floor(Math.random() * pastelColors.length)];
+        const color = pastelColors[Math.floor(Math.random() * pastelColors.length)]; // eslint-disable-line react-hooks/purity
         
         // Vortex final parameters
-        const angle = Math.random() * Math.PI * 2;
+        const angle = Math.random() * Math.PI * 2; // eslint-disable-line react-hooks/purity
         // Tornado shape: distribute height between -6 and +8, making the radius wider near the top
-        const height = -6 + Math.random() * 14; 
+        const height = -6 + Math.random() * 14; // eslint-disable-line react-hooks/purity
         
         // Base radius calculation to shape the tornado (wider at top, narrower at bottom)
         const radiusFactor = (height + 15) / 14; // 0 to 1 based on height
-        const radius = 1.5 + (radiusFactor * 4) + (Math.random() * 1.5); // 1.5 min radius -> 7 max radius
+        const radius = 1.5 + (radiusFactor * 4) + (Math.random() * 1.5); // eslint-disable-line react-hooks/purity
         
         data.push({ x, y, z, color, angle, radius, height, scale: 0 });
     }
