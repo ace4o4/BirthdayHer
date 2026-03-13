@@ -1,44 +1,28 @@
 import { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Html, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 
 // ==========================================
-// LETTER SEGMENTS — one per connection phase
-// ==========================================
-const letterSegments = [
-  "From the first day I talked to you, I knew there was something special about you.",
-  "Your laugh, your stubborn cuteness — everything lights up my world.",
-  "Your kindness, your energy, the way you fight through everything silently — I see it all.",
-  "You are the strongest, most beautiful soul I know.",
-  "You deserve the entire universe and more.",
-  "I promise to be there through every storm and every sunrise.",
-  "I promise to make you laugh when the world feels heavy.",
-  "I promise to protect your peace, your dreams, and your happiness.",
-  "You are my peace in this chaotic universe. Happy Birthday, my forever person. 🌸",
-  "— with all my love, always ✦",
-];
-
-// ==========================================
-// PURVA PHALGUNI CONSTELLATION — exact reference match
-// Compact body trapezoid + small head Y-fork
+// PURVA PHALGUNI CONSTELLATION
 // ==========================================
 const stars = [
   // Left — triangle
-  { x: -3.0, y: -0.99, name: 'Denebola', bright: false },  // 0 — far-left (tail)
-  { x: -1.3, y:  0.4, name: 'Zosma', bright: true },       // 1 — RED star (upper-left body)
-  { x: -1, y: -0.7, name: 'Chertan', bright: false },    // 2 — lower-left body
+  { x: -3.0, y: -0.99, name: 'Sukun', bright: false },     // 0 — far-left (tail)
+  { x: -1.3, y:  0.4, name: 'Noor', bright: true },        // 1 — RED star (upper-left body)
+  { x: -1, y: -0.7, name: 'Inayat', bright: false },       // 2 — lower-left body
 
   // Body — center
-  { x:  0.9, y:  0.6, name: 'Algieba', bright: false },    // 3 — center-upper
-  { x:  1.6, y: 0.01, name: 'Al Jabhah', bright: false },  // 4 — center-right body
+  { x:  0.9, y:  0.6, name: 'Rooh', bright: false },       // 3 — center-upper
+  { x:  1.6, y: 0.01, name: 'Barkat', bright: false },     // 4 — center-right body
 
   // Right — bottom
-  { x:  1.8, y: -0.8, name: 'Regulus', bright: false },    // 5 — far-right bottom
+  { x:  1.8, y: -0.8, name: 'Khushi', bright: false },     // 5 — far-right bottom
 
   // Head — compact Y-fork
-  { x:  0.9, y:  1.4, name: 'Adhafera', bright: false },   // 6 — head base (neck)
-  { x:  1.8, y:  2.5, name: 'Ras Elased', bright: false }, // 7 — head top
-  { x:  2.4, y:  2.1, name: 'Alterf', bright: false },     // 8 — fork right
+  { x:  0.9, y:  1.4, name: 'Fitoor', bright: false },     // 6 — head base (neck)
+  { x:  1.8, y:  2.5, name: 'Manzil', bright: false },     // 7 — head top
+  { x:  2.4, y:  2.1, name: 'Jannat', bright: false },     // 8 — fork right
 ];
 
 // Lines — drawn ONE BY ONE as you scroll
@@ -162,6 +146,8 @@ function Constellation({ scrollProgress }) {
   const groupRef = useRef();
   const starMeshes = useRef([]);
   const glowMeshes = useRef([]);
+  const starTextRefs = useRef([]);
+  const starParticlesRefs = useRef([]);
   const lineRefs = useRef([]);
   const elapsedRef = useRef(0);
 
@@ -208,6 +194,21 @@ function Constellation({ scrollProgress }) {
         glow.scale.setScalar(isActive ? twinkle * 1.2 * divineBoost : 0.01);
         glow.material.opacity = isActive ? 0.2 + divineProgress * 0.15 : 0;
       }
+
+      // Star text logic
+      if (starTextRefs.current[i]) {
+        const textEl = starTextRefs.current[i];
+        // Fade in when active, fade out completely when divine glow hits 50%
+        const targetOpacity = isActive ? Math.max(0, 1 - divineProgress * 2) : 0;
+        const currentOpacity = parseFloat(textEl.style.opacity || 0);
+        textEl.style.opacity = String(THREE.MathUtils.lerp(currentOpacity, targetOpacity, delta * 8));
+        textEl.style.transform = `scale(${0.8 + currentOpacity * 0.2})`;
+      }
+      
+      // Star particles logic
+      if (starParticlesRefs.current[i]) {
+        starParticlesRefs.current[i].visible = isActive && divineProgress < 0.5;
+      }
     });
 
     // --- Update lines: draw one by one based on scroll ---
@@ -250,6 +251,29 @@ function Constellation({ scrollProgress }) {
       {/* Constellation star dots — SMALL */}
       {stars.map((star, i) => (
         <group key={i} position={[star.x, star.y, 0]}>
+          {/* Particles for the active star */}
+          <group ref={(el) => (starParticlesRefs.current[i] = el)} visible={false}>
+            <Sparkles count={15} scale={1.2} size={3} speed={0.4} opacity={0.6} color="#fbbf24" noise={1} />
+          </group>
+
+          {/* Hindi Name Label */}
+          <Html position={[0, -0.22, 0]} center zIndexRange={[10, 0]}>
+            <div 
+               ref={(el) => (starTextRefs.current[i] = el)}
+               className="pointer-events-none opacity-0"
+               style={{ 
+                 color: '#fde68a', 
+                 fontFamily: "'Dancing Script', cursive, sans-serif", 
+                 fontSize: '1.4rem',
+                 textShadow: '0 0 10px rgba(251,191,36,0.8), 0 0 20px rgba(251,191,36,0.4)',
+                 whiteSpace: 'nowrap',
+                 willChange: 'opacity, transform'
+               }}
+            >
+              {star.name}
+            </div>
+          </Html>
+
           {/* Tiny star dot */}
           <mesh ref={(el) => (starMeshes.current[i] = el)}>
             <sphereGeometry args={[star.bright ? 0.08 : 0.06, 12, 12]} />
@@ -291,77 +315,6 @@ function Constellation({ scrollProgress }) {
 }
 
 // ==========================================
-// LETTER TEXT OVERLAY — appears between connections, fades at divine
-// ==========================================
-function LetterOverlay({ scrollProgress }) {
-  const ref = useRef();
-
-  useEffect(() => {
-    const totalLines = lines.length;
-    const linePhaseStart = 0.05;
-    const linePhaseEnd = 0.88;
-
-    const animate = () => {
-      if (!ref.current) return;
-      const p = scrollProgress.current;
-      const children = ref.current.children;
-
-      // Divine mode — fade ALL text
-      const divineProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));
-
-      // Show one text segment per line connection
-      for (let i = 0; i < Math.min(children.length, totalLines); i++) {
-        const lineStart = linePhaseStart + (i / totalLines) * (linePhaseEnd - linePhaseStart);
-        const lineEnd = linePhaseStart + ((i + 1) / totalLines) * (linePhaseEnd - linePhaseStart);
-
-        // Fade in during this line's phase
-        const fadeIn = Math.min(1, Math.max(0, (p - lineStart) / ((lineEnd - lineStart) * 0.4)));
-        // Fade out as next line starts
-        const nextStart = linePhaseStart + ((i + 1) / totalLines) * (linePhaseEnd - linePhaseStart);
-        const fadeOut = i < totalLines - 1
-          ? (p > nextStart + 0.02 ? Math.max(0, 1 - (p - nextStart - 0.02) / 0.03) : 1)
-          : 1;
-
-        const opacity = fadeIn * fadeOut * (1 - divineProgress);
-        children[i].style.opacity = String(opacity);
-        children[i].style.transform = `translateY(${(1 - fadeIn) * 20}px)`;
-      }
-
-      requestAnimationFrame(animate);
-    };
-
-    const raf = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(raf);
-  }, [scrollProgress]);
-
-  return (
-    <div
-      ref={ref}
-      className="fixed top-0 left-0 w-full h-screen pointer-events-none z-20 flex items-end justify-center pb-16 px-6"
-    >
-      {letterSegments.map((text, i) => (
-        <div
-          key={i}
-          className="absolute bottom-16 left-1/2 -translate-x-1/2 max-w-lg text-center opacity-0 transition-none"
-        >
-          <p
-            className="text-base md:text-lg leading-relaxed font-medium"
-            style={{
-              color: '#fde68a',
-              textShadow: '0 0 25px rgba(251,191,36,0.5), 0 0 50px rgba(251,191,36,0.15)',
-              fontFamily: "'Dancing Script', cursive, sans-serif",
-              fontSize: '1.2rem',
-            }}
-          >
-            "{text}"
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ==========================================
 // DIVINE TITLE — appears at the end
 // ==========================================
 function DivineTitle({ scrollProgress }) {
@@ -371,7 +324,7 @@ function DivineTitle({ scrollProgress }) {
     const animate = () => {
       if (!ref.current) return;
       const p = scrollProgress.current;
-      const divineProgress = Math.min(1, Math.max(0, (p - 0.92) / 0.08));
+      const divineProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));
       ref.current.style.opacity = String(divineProgress);
       ref.current.style.transform = `translateY(${(1 - divineProgress) * 30}px) scale(${0.8 + divineProgress * 0.2})`;
       requestAnimationFrame(animate);
@@ -392,21 +345,23 @@ function DivineTitle({ scrollProgress }) {
         Purva Phalguni
       </p>
       <h2
-        className="text-4xl md:text-6xl font-bold"
+        className="text-5xl md:text-7xl font-bold mt-2"
         style={{
           color: '#fef3c7',
           textShadow: '0 0 40px rgba(251,191,36,0.6), 0 0 80px rgba(251,191,36,0.3)',
           fontFamily: "'Dancing Script', cursive, sans-serif"
         }}
       >
-        ✦ Written in the Stars ✦
+        ✦ Purva Phalguni ✦
       </h2>
-      <p
-        className="text-lg mt-2"
-        style={{ color: '#e9d5ff', textShadow: '0 0 15px rgba(139,92,246,0.4)' }}
+      <div
+        className="text-lg md:text-xl mt-6 flex flex-col items-center gap-3 font-medium tracking-wider"
+        style={{ color: '#e9d5ff', textShadow: '0 0 15px rgba(139,92,246,0.5)' }}
       >
-        for you, always 💫
-      </p>
+        <p>✨ Endless Warmth & Affection ✨</p>
+        <p>✨ Fierce Creative Passion ✨</p>
+        <p>✨ Bringer of Deep Peace ✨</p>
+      </div>
     </div>
   );
 }
@@ -500,7 +455,6 @@ export default function CosmicConstellation() {
           <color attach="background" args={['#050210']} />
           <CosmicScene scrollProgress={scrollProgress} />
         </Canvas>
-        <LetterOverlay scrollProgress={scrollProgress} />
         <DivineTitle scrollProgress={scrollProgress} />
       </div>
 

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, Suspense } from 'react';
+import { useRef, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
@@ -31,6 +31,35 @@ function MapPlane({ scrollProgress }) {
     <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]}>
       <planeGeometry args={[16, 10, 1, 1]} />
       <meshBasicMaterial map={texture} transparent opacity={1} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
+// ==========================================
+// IMMERSIVE SOOTHING BACKGROUND (3D Panorama)
+// ==========================================
+function ImmersiveBackground({ scrollProgress }) {
+  const meshRef = useRef();
+  const texture = useTexture(assetUrl('/assets/3d_bg.jpg'));
+
+  useFrame(() => {
+    if (!meshRef.current) return;
+    const p = scrollProgress.current;
+
+    // Gentle pan across the soothing image
+    meshRef.current.rotation.y = p * 0.3;
+  });
+
+  return (
+    // Pushed far back and down slightly to cover the view perfectly
+    <mesh ref={meshRef} position={[0, -10, -100]}>
+      {/* Massive curved wall (radius, radius, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength) */}
+      <cylinderGeometry args={[120, 120, 80, 64, 1, true, -Math.PI / 2, Math.PI]} />
+      <meshBasicMaterial 
+        map={texture} 
+        side={THREE.DoubleSide} 
+        color="#ffffff"
+      />
     </mesh>
   );
 }
@@ -223,146 +252,6 @@ function PhotoFrame({ position, rotationY, scrollProgress, index, color, img }) 
 }
 
 // ==========================================
-// AMBIENT PARTICLES — sparkle dust
-// ==========================================
-function Particles({ count = 250 }) {
-  const mesh = useRef();
-  const elapsedRef = useRef(0);
-  const [positions] = useState(() => {
-    const pos = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 30;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 15;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 80 - 10;
-    }
-    return pos;
-  });
-
-  useFrame((state, delta) => {
-    elapsedRef.current += delta;
-    if (!mesh.current) return;
-    mesh.current.rotation.y = elapsedRef.current * 0.015;
-    mesh.current.rotation.x = Math.sin(elapsedRef.current * 0.008) * 0.05;
-  });
-
-  return (
-    <points ref={mesh}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={count}
-          array={positions}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <pointsMaterial size={0.06} color="#ddd6fe" transparent opacity={0.6} sizeAttenuation />
-    </points>
-  );
-}
-
-// ==========================================
-// FLOATING BOKEH ORBS — soft glowing spheres
-// ==========================================
-const bokehData = [
-  { pos: [-6, 3, -8], size: 0.4, color: '#fbcfe8', speed: 0.3 },
-  { pos: [5, -2, -15], size: 0.6, color: '#c4b5fd', speed: 0.2 },
-  { pos: [-3, 4, -25], size: 0.35, color: '#a5f3fc', speed: 0.4 },
-  { pos: [7, 1, -35], size: 0.5, color: '#fde68a', speed: 0.25 },
-  { pos: [-8, -1, -12], size: 0.45, color: '#bbf7d0', speed: 0.35 },
-  { pos: [4, 3, -45], size: 0.3, color: '#fecdd3', speed: 0.3 },
-  { pos: [-5, -3, -30], size: 0.55, color: '#ddd6fe', speed: 0.2 },
-  { pos: [6, 2, -55], size: 0.4, color: '#bae6fd', speed: 0.3 },
-  { pos: [-7, 0, -40], size: 0.5, color: '#fde68a', speed: 0.25 },
-  { pos: [3, -2, -20], size: 0.35, color: '#fbcfe8', speed: 0.4 },
-  { pos: [-4, 5, -50], size: 0.6, color: '#c4b5fd', speed: 0.15 },
-  { pos: [8, -1, -60], size: 0.45, color: '#a5f3fc', speed: 0.3 },
-  { pos: [-6, 2, -18], size: 0.3, color: '#bbf7d0', speed: 0.35 },
-  { pos: [5, 4, -42], size: 0.5, color: '#fecdd3', speed: 0.2 },
-  { pos: [-2, -4, -28], size: 0.4, color: '#ddd6fe', speed: 0.3 },
-  { pos: [7, -3, -52], size: 0.35, color: '#bae6fd', speed: 0.25 },
-  { pos: [-8, 3, -65], size: 0.55, color: '#fbcfe8', speed: 0.2 },
-  { pos: [4, 0, -10], size: 0.3, color: '#fde68a', speed: 0.4 },
-  { pos: [-3, -2, -48], size: 0.45, color: '#c4b5fd', speed: 0.3 },
-  { pos: [6, 5, -22], size: 0.4, color: '#a5f3fc', speed: 0.25 },
-];
-
-function FloatingBokeh() {
-  return (
-    <group>
-      {bokehData.map((b, i) => (
-        <BokehOrb key={i} index={i} pos={b.pos} size={b.size} color={b.color} speed={b.speed} />
-      ))}
-    </group>
-  );
-}
-
-function BokehOrb({ pos, size, color, speed, index }) {
-  const ref = useRef();
-  const elapsedRef = useRef(0);
-  useFrame((state, delta) => {
-    elapsedRef.current += delta;
-    if (!ref.current) return;
-    const t = elapsedRef.current;
-    ref.current.position.x = pos[0] + Math.sin(t * speed + index) * 0.8;
-    ref.current.position.y = pos[1] + Math.sin(t * speed * 0.7 + index * 2) * 0.6;
-  });
-
-  return (
-    <mesh ref={ref} position={pos}>
-      <sphereGeometry args={[size, 16, 16]} />
-      <meshBasicMaterial color={color} transparent opacity={0.15} />
-    </mesh>
-  );
-}
-
-// ==========================================
-// FLOATING DECORATIVE SHAPES — hearts, stars, rings
-// ==========================================
-const shapeData = [
-  { pos: [-5, 2, -10], type: 'ring', color: '#ec4899', scale: 0.5 },
-  { pos: [6, -1, -20], type: 'torus', color: '#8b5cf6', scale: 0.3 },
-  { pos: [-4, 3, -35], type: 'ring', color: '#f97316', scale: 0.4 },
-  { pos: [5, 0, -50], type: 'torus', color: '#3b82f6', scale: 0.35 },
-  { pos: [-7, -2, -45], type: 'ring', color: '#10b981', scale: 0.45 },
-  { pos: [7, 3, -30], type: 'torus', color: '#ec4899', scale: 0.25 },
-  { pos: [-6, 1, -58], type: 'ring', color: '#8b5cf6', scale: 0.5 },
-  { pos: [4, -3, -15], type: 'torus', color: '#f97316', scale: 0.3 },
-];
-
-function FloatingShapes() {
-  return (
-    <group>
-      {shapeData.map((s, i) => (
-        <FloatingShape key={i} index={i} pos={s.pos} type={s.type} color={s.color} scale={s.scale} />
-      ))}
-    </group>
-  );
-}
-
-function FloatingShape({ pos, type, color, scale, index }) {
-  const ref = useRef();
-  const elapsedRef = useRef(0);
-  useFrame((state, delta) => {
-    elapsedRef.current += delta;
-    if (!ref.current) return;
-    const t = elapsedRef.current;
-    ref.current.rotation.x = t * 0.3 + index;
-    ref.current.rotation.z = t * 0.2 + index * 0.5;
-    ref.current.position.y = pos[1] + Math.sin(t * 0.4 + index) * 0.5;
-  });
-
-  return (
-    <mesh ref={ref} position={pos} scale={scale}>
-      {type === 'ring'
-        ? <torusGeometry args={[1, 0.15, 12, 32]} />
-        : <torusKnotGeometry args={[0.6, 0.2, 64, 8]} />
-      }
-      <meshBasicMaterial color={color} transparent opacity={0.12} wireframe />
-    </mesh>
-  );
-}
-
-// ==========================================
 // CAMERA CONTROLLER
 // ==========================================
 function CameraController({ scrollProgress }) {
@@ -382,7 +271,7 @@ function CameraController({ scrollProgress }) {
       camera.position.x = (1 - Math.min(galP * 2, 1)) * 1;
       camera.position.y = 4 - Math.min(galP * 2, 1) * 3.5;
       camera.position.z = 3 - galP * 1;
-      camera.lookAt(0, 0, -5);
+      camera.lookAt(0, 0, -20); // Look further into the scene to see background clearly
     }
   });
 
@@ -395,23 +284,22 @@ function CameraController({ scrollProgress }) {
 function Scene({ scrollProgress }) {
   return (
     <>
-      {/* Fog for depth */}
-      <fog attach="fog" args={['#dbeafe', 15, 70]} />
-
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[5, 8, 5]} intensity={1} color="#fffcf5" />
-      <pointLight position={[-3, 3, -5]} intensity={0.4} color="#c4b5fd" />
-      <pointLight position={[4, -2, -20]} intensity={0.3} color="#fbcfe8" />
-      <pointLight position={[-5, 2, -40]} intensity={0.3} color="#a5f3fc" />
-      <pointLight position={[3, 1, -55]} intensity={0.2} color="#fde68a" />
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[5, 5, 5]} intensity={0.8} />
+      <pointLight position={[-5, 2, -10]} intensity={0.5} color="#e879f9" />
+      <pointLight position={[5, -2, -30]} intensity={0.6} color="#38bdf8" />
+      <pointLight position={[0, 4, -50]} intensity={0.4} color="#fcd34d" />
 
       <CameraController scrollProgress={scrollProgress} />
-      <Particles />
-      <FloatingBokeh />
-      <FloatingShapes />
-
+      
+      {/* The Map Floor initially */}
       <Suspense fallback={null}>
         <MapPlane scrollProgress={scrollProgress} />
+      </Suspense>
+
+      {/* The Soothing Panorama Background */}
+      <Suspense fallback={null}>
+        <ImmersiveBackground scrollProgress={scrollProgress} />
       </Suspense>
 
       {pinData.map((pin, i) => (
