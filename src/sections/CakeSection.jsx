@@ -517,6 +517,7 @@ export default function CakeSection({ onBlowCandles }) {
       clearTimeout(autoBlowTimer);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBlowing, isExtinguished]);
 
   const startListening = async () => {
