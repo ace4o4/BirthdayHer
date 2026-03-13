@@ -315,58 +315,6 @@ function Constellation({ scrollProgress }) {
 }
 
 // ==========================================
-// DIVINE TITLE — appears at the end
-// ==========================================
-function DivineTitle({ scrollProgress }) {
-  const ref = useRef();
-
-  useEffect(() => {
-    const animate = () => {
-      if (!ref.current) return;
-      const p = scrollProgress.current;
-      const divineProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));
-      ref.current.style.opacity = String(divineProgress);
-      ref.current.style.transform = `translateY(${(1 - divineProgress) * 30}px) scale(${0.8 + divineProgress * 0.2})`;
-      requestAnimationFrame(animate);
-    };
-    const raf = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(raf);
-  }, [scrollProgress]);
-
-  return (
-    <div
-      ref={ref}
-      className="fixed top-0 left-0 w-full h-screen pointer-events-none z-30 flex flex-col items-center justify-center gap-4 opacity-0"
-    >
-      <p
-        className="text-sm tracking-[0.3em] uppercase font-bold"
-        style={{ color: '#c4b5fd', textShadow: '0 0 20px rgba(139,92,246,0.5)' }}
-      >
-        Purva Phalguni
-      </p>
-      <h2
-        className="text-5xl md:text-7xl font-bold mt-2"
-        style={{
-          color: '#fef3c7',
-          textShadow: '0 0 40px rgba(251,191,36,0.6), 0 0 80px rgba(251,191,36,0.3)',
-          fontFamily: "'Dancing Script', cursive, sans-serif"
-        }}
-      >
-        ✦ Purva Phalguni ✦
-      </h2>
-      <div
-        className="text-lg md:text-xl mt-6 flex flex-col items-center gap-3 font-medium tracking-wider"
-        style={{ color: '#e9d5ff', textShadow: '0 0 15px rgba(139,92,246,0.5)' }}
-      >
-        <p>✨ Endless Warmth & Affection ✨</p>
-        <p>✨ Fierce Creative Passion ✨</p>
-        <p>✨ Bringer of Deep Peace ✨</p>
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
 // CAMERA
 // ==========================================
 function CosmicCamera({ scrollProgress }) {
@@ -455,7 +403,6 @@ export default function CosmicConstellation() {
           <color attach="background" args={['#050210']} />
           <CosmicScene scrollProgress={scrollProgress} />
         </Canvas>
-        <DivineTitle scrollProgress={scrollProgress} />
       </div>
 
       {/* Scroll driver — LONG so each line has reading time */}
