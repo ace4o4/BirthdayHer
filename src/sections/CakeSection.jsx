@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, Sparkles, Float, Cylinder, Cone, Sphere, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
@@ -397,7 +397,7 @@ export default function CakeSection({ onBlowCandles }) {
   const microphoneRef = useRef(null);
   const animationFrameRef = useRef(null);
 
-  function triggerExtinguish() {
+  const triggerExtinguish = useCallback(() => {
     setIsExtinguished(true);
     setIsBlowing(false);
     
@@ -471,7 +471,7 @@ export default function CakeSection({ onBlowCandles }) {
     setTimeout(() => {
       onBlowCandles();
     }, 3500); 
-  }
+  }, [onBlowCandles]);
 
   useEffect(() => {
     let isWarmupComplete = false;
@@ -517,7 +517,7 @@ export default function CakeSection({ onBlowCandles }) {
       clearTimeout(autoBlowTimer);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [isBlowing, isExtinguished]);
+  }, [isBlowing, isExtinguished, triggerExtinguish]);
 
   const startListening = async () => {
     try {

@@ -6,16 +6,16 @@ export default function FloatingParticles({ count = 30 }) {
   const [particles] = useState(() => {
     return Array.from({ length: count }).map((_, i) => ({
       id: i,
-      x: Math.random() * 100, // eslint-disable-line react-hooks/purity
-      y: Math.random() * 100, // eslint-disable-line react-hooks/purity
-      size: Math.random() * 8 + 4, // eslint-disable-line react-hooks/purity
-      duration: Math.random() * 15 + 10, // eslint-disable-line react-hooks/purity
-      delay: Math.random() * 10, // eslint-disable-line react-hooks/purity
-      opacity: Math.random() * 0.4 + 0.1, // eslint-disable-line react-hooks/purity
-      animX1: Math.random() * 100 - 50, // eslint-disable-line react-hooks/purity
-      animX2: Math.random() * 100 - 50, // eslint-disable-line react-hooks/purity
-      animY1: Math.random() * -100 - 50, // eslint-disable-line react-hooks/purity
-      animY2: Math.random() * -100 - 50, // eslint-disable-line react-hooks/purity
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 8 + 4,
+      duration: Math.random() * 15 + 10,
+      delay: Math.random() * 10,
+      opacity: Math.random() * 0.4 + 0.1,
+      animX1: Math.random() * 100 - 50,
+      animX2: Math.random() * 100 - 50,
+      animY1: Math.random() * -100 - 50,
+      animY2: Math.random() * -100 - 50,
     }));
   });
 
