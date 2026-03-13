@@ -6,11 +6,12 @@ import gsap from 'gsap';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
-// Procedural 3D Chest/Box Component for the Main Centerpiece
+// Paper Envelope 3D Component — looks like a real folded paper envelope
 const MainEnvelope = ({ isSwirling, envelopeStep }) => {
   const groupRef = useRef();
   const flapRef = useRef();
   const cardRef = useRef();
+  const sealRef = useRef();
 
   // Hovering effect before swirl
   useFrame((state) => {
@@ -21,7 +22,6 @@ const MainEnvelope = ({ isSwirling, envelopeStep }) => {
 
   useLayoutEffect(() => {
     if (isSwirling && groupRef.current) {
-      // 1. Shoot upwards when vortex starts
       gsap.to(groupRef.current.position, {
         y: 3.5,
         duration: 1.5,
@@ -37,90 +37,164 @@ const MainEnvelope = ({ isSwirling, envelopeStep }) => {
 
   useLayoutEffect(() => {
     if (envelopeStep === 1 && flapRef.current) {
-      // 2. Open Flap (Chest Lid rotating backwards)
+      // Open flap — rotates backward like a real envelope flap
       gsap.to(flapRef.current.rotation, {
-        x: -Math.PI * 0.55,
-        duration: 1.2,
-        ease: "bounce.out"
+        x: -Math.PI * 0.75,
+        duration: 1.0,
+        ease: "power2.out"
       });
-      
-      // 3. Card slides up slightly out of envelope
+      // Hide the seal
+      if (sealRef.current) {
+        gsap.to(sealRef.current.scale, {
+          x: 0, y: 0, z: 0,
+          duration: 0.3,
+          ease: "power2.in"
+        });
+      }
+      // Card/letter slides up out of envelope
       if (cardRef.current) {
         gsap.to(cardRef.current.position, {
-          y: 0.8,
-          duration: 1,
-          delay: 0.3,
+          y: 1.2,
+          duration: 1.2,
+          delay: 0.4,
           ease: "power2.out"
         });
       }
-
-      // 4. Trigger Mint-Green Confetti Burst
+      // Confetti
       setTimeout(() => {
         confetti({
           particleCount: 150,
           spread: 80,
           origin: { y: 0.4 },
-          colors: ['#a7f3d0', '#6ee7b7', '#34d399', '#ffffff'], // Mint Greens
+          colors: ['#a7f3d0', '#6ee7b7', '#34d399', '#ffffff'],
           disableForReducedMotion: true
         });
       }, 500);
     } else if (envelopeStep === 0 && flapRef.current && isSwirling) {
-      // Close flap if they scroll back up
       gsap.to(flapRef.current.rotation, { x: 0, duration: 0.5 });
       if (cardRef.current) gsap.to(cardRef.current.position, { y: 0, duration: 0.5 });
+      if (sealRef.current) gsap.to(sealRef.current.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
     }
   }, [envelopeStep, isSwirling]);
 
+  // Envelope dimensions
+  const W = 2.2;  // width
+  const H = 1.4;  // height
+  const FLAP_H = 0.9; // flap height
+
   return (
     <group ref={groupRef} scale={1.2}>
-      {/* Chest Body */}
-      <mesh position={[0, -0.25, 0]}>
-        <boxGeometry args={[1.8, 0.8, 1]} />
-        <meshStandardMaterial color="#fbcfe8" roughness={0.6} />
-      </mesh>
-      
-      {/* Chest Body Gold Rim */}
-      <mesh position={[0, 0.16, 0]}>
-        <boxGeometry args={[1.82, 0.05, 1.02]} />
-        <meshStandardMaterial color="#fef08a" roughness={0.2} metalness={0.8} />
+      {/* ── Envelope Body (back panel) ── */}
+      <mesh position={[0, 0, -0.02]}>
+        <planeGeometry args={[W, H]} />
+        <meshToonMaterial color="#f5e6d3" side={THREE.DoubleSide} />
       </mesh>
 
-      {/* The pop-out magical card inside (Hidden until opened) */}
-      <mesh ref={cardRef} position={[0, -0.2, 0]}>
-         <planeGeometry args={[1.6, 1.1]} />
-         <meshStandardMaterial color="#f8fafc" roughness={0.2} metalness={0.5} emissive="#6ee7b7" emissiveIntensity={0.2} side={THREE.DoubleSide} />
+      {/* ── Envelope Front Panel (slightly in front) ── */}
+      <mesh position={[0, -H * 0.07, 0.02]}>
+        <planeGeometry args={[W, H * 0.85]} />
+        <meshToonMaterial color="#faf0e6" side={THREE.DoubleSide} />
       </mesh>
 
-      {/* Top Hinge Lid */}
-      <group position={[0, 0.15, -0.5]} ref={flapRef}>
-        <group position={[0, 0.25, 0.5]}>
-          <mesh>
-            <boxGeometry args={[1.8, 0.5, 1]} />
-            <meshStandardMaterial color="#f9a8d4" roughness={0.6} />
-          </mesh>
-          
-          {/* Lid Gold Rim Base */}
-          <mesh position={[0, -0.25, 0]}>
-            <boxGeometry args={[1.82, 0.05, 1.02]} />
-            <meshStandardMaterial color="#fef08a" roughness={0.2} metalness={0.8} />
-          </mesh>
+      {/* ── Bottom fold line accent ── */}
+      <mesh position={[0, -H * 0.5 + 0.02, 0.03]}>
+        <planeGeometry args={[W, 0.03]} />
+        <meshToonMaterial color="#e8d5c4" />
+      </mesh>
 
-          {/* Cute Wax Seal / Lock on the front of the lid */}
-          <mesh position={[0, -0.1, 0.52]} rotation={[Math.PI / 2, 0, 0]}>
-             <cylinderGeometry args={[0.2, 0.2, 0.1, 32]} />
-             <meshStandardMaterial color="#f43f5e" roughness={0.3} metalness={0.2} />
+      {/* ── Left side fold triangle ── */}
+      <mesh position={[-W * 0.35, 0, 0.01]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[W * 0.32, H * 0.9]} />
+        <meshToonMaterial color="#f0dcc8" side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* ── Right side fold triangle ── */}
+      <mesh position={[W * 0.35, 0, 0.01]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[W * 0.32, H * 0.9]} />
+        <meshToonMaterial color="#f0dcc8" side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* ── Thin border/edge line around envelope ── */}
+      <mesh position={[0, 0, 0.025]}>
+        <planeGeometry args={[W + 0.04, H + 0.04]} />
+        <meshToonMaterial color="#dcc9b5" side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, 0, 0.026]}>
+        <planeGeometry args={[W - 0.02, H - 0.02]} />
+        <meshToonMaterial color="#faf0e6" side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* ── Inner stripe details (like a real envelope) ── */}
+      {[-0.4, -0.15, 0.1, 0.35].map((y, i) => (
+        <mesh key={i} position={[0, y, -0.015]} >
+          <planeGeometry args={[W * 0.85, 0.015]} />
+          <meshToonMaterial color="#e8d5c4" />
+        </mesh>
+      ))}
+
+      {/* ── The Letter/Card inside ── */}
+      <group ref={cardRef} position={[0, 0, -0.01]}>
+        <mesh>
+          <planeGeometry args={[W * 0.88, H * 0.85]} />
+          <meshToonMaterial color="#fffef5" side={THREE.DoubleSide} />
+        </mesh>
+        {/* Faint ruled lines on the letter */}
+        {[-0.35, -0.2, -0.05, 0.1, 0.25, 0.4].map((y, i) => (
+          <mesh key={`line-${i}`} position={[0, y, 0.001]}>
+            <planeGeometry args={[W * 0.75, 0.008]} />
+            <meshBasicMaterial color="#dde5ed" transparent opacity={0.5} />
           </mesh>
-          {/* Inner Lock Gold details */}
-          <mesh position={[0, -0.1, 0.55]} rotation={[Math.PI / 2, 0, 0]}>
-             <cylinderGeometry args={[0.08, 0.08, 0.1, 32]} />
-             <meshStandardMaterial color="#fef08a" roughness={0.2} metalness={0.8} />
-          </mesh>
-        </group>
+        ))}
+        {/* Little heart doodle on letter */}
+        <mesh position={[0.6, -0.45, 0.001]}>
+          <planeGeometry args={[0.15, 0.15]} />
+          <meshBasicMaterial color="#f9a8d4" transparent opacity={0.4} />
+        </mesh>
+      </group>
+
+      {/* ── Top Flap (triangular envelope flap) ── */}
+      <group position={[0, H * 0.5, 0]} ref={flapRef}>
+        {/* The flap pivots from the top edge of the envelope body */}
+        <mesh position={[0, -FLAP_H * 0.45, 0.01]} rotation={[0, 0, 0]}>
+          <planeGeometry args={[W, FLAP_H]} />
+          <meshToonMaterial color="#eddcc6" side={THREE.DoubleSide} />
+        </mesh>
+        {/* Flap fold accent line */}
+        <mesh position={[0, 0, 0.015]}>
+          <planeGeometry args={[W, 0.025]} />
+          <meshToonMaterial color="#d4c4ae" side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+
+      {/* ── Wax Seal Heart ── */}
+      <group ref={sealRef} position={[0, H * 0.05, 0.04]}>
+        {/* Seal circle */}
+        <mesh>
+          <circleGeometry args={[0.22, 16]} />
+          <meshToonMaterial color="#e11d48" />
+        </mesh>
+        {/* Inner seal detail */}
+        <mesh position={[0, 0, 0.005]}>
+          <circleGeometry args={[0.14, 12]} />
+          <meshToonMaterial color="#f43f5e" />
+        </mesh>
+        {/* Heart shape on seal (simplified) */}
+        <mesh position={[0, -0.02, 0.01]}>
+          <circleGeometry args={[0.06, 8]} />
+          <meshToonMaterial color="#fecdd3" />
+        </mesh>
+        <mesh position={[-0.04, 0.03, 0.01]}>
+          <circleGeometry args={[0.04, 8]} />
+          <meshToonMaterial color="#fecdd3" />
+        </mesh>
+        <mesh position={[0.04, 0.03, 0.01]}>
+          <circleGeometry args={[0.04, 8]} />
+          <meshToonMaterial color="#fecdd3" />
+        </mesh>
       </group>
     </group>
   );
 };
-
 
 // The chaotic vortex swarm of 250 small dummy envelopes
 const Swarm = ({ isSwirling }) => {
@@ -130,7 +204,7 @@ const Swarm = ({ isSwirling }) => {
 
   const instancesData = useMemo(() => {
     const data = [];
-    const pastelColors = ['#fbcfe8', '#fef08a', '#bbf7d0', '#bfdbfe', '#e9d5ff', '#fda4af'];
+    const vibrantPastels = ['#f472b6', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa', '#fb923c', '#fecdd3'];
     
     for (let i = 0; i < count; i++) {
         // Initial hidden spawn position behind the main envelope
@@ -138,7 +212,7 @@ const Swarm = ({ isSwirling }) => {
         const y = (Math.random() - 0.5) * 0.2;
         const z = -0.5 + (Math.random() - 0.5) * 0.2;
         
-        const color = pastelColors[Math.floor(Math.random() * pastelColors.length)];
+        const color = vibrantPastels[Math.floor(Math.random() * vibrantPastels.length)];
         
         // Vortex final parameters
         const angle = Math.random() * Math.PI * 2;
@@ -221,8 +295,8 @@ const Swarm = ({ isSwirling }) => {
 
   return (
     <Instances limit={count} range={count}>
-      <boxGeometry args={[0.4, 0.25, 0.05]} /> {/* Small dummy envelope shape */}
-      <meshStandardMaterial roughness={0.3} metalness={0.1} />
+      <boxGeometry args={[0.3, 0.2, 0.005]} /> {/* Thin paper card shape */}
+      <meshToonMaterial />
       {instancesData.map((data, i) => (
         <Instance 
           key={i} 
@@ -283,62 +357,89 @@ export default function MagicalEnvelopeReveal({ envelopeStep, isSwirling, setIsS
              animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
              exit={{ opacity: 0, scale: 1.1, y: -50, filter: "blur(10px)" }}
              transition={{ duration: 1.2, ease: "easeOut" }}
-             className="absolute inset-x-4 md:inset-x-auto md:w-[650px] md:left-1/2 md:-translate-x-1/2 top-24 bottom-16 bg-[#fffdf0] rounded-sm shadow-2xl z-30 p-10 flex flex-col items-center justify-center pointer-events-auto"
+             className="absolute inset-x-4 md:inset-x-auto md:w-[600px] md:left-1/2 md:-translate-x-1/2 top-16 bottom-16 bg-[#fffdf0] rounded-lg shadow-2xl z-30 p-2 sm:p-6 lg:p-10 pointer-events-auto flex flex-col items-center overflow-hidden"
              style={{
                 backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')",
-                boxShadow: "0 40px 60px -15px rgba(0,0,0,0.6), inset 0 0 80px rgba(212,175,55,0.15)",
-                border: "1px solid #e5e5e5",
-                borderImage: "linear-gradient(to bottom right, #d4af37, #fef08a, #d4af37) 1"
+                boxShadow: "0 40px 60px -15px rgba(0,0,0,0.6), inset 0 0 80px rgba(236,72,153,0.1)",
+                border: "1px solid #fbcfe8",
              }}
            >
-             {/* Royal Gold Foil Border Accent */}
-             <div className="absolute inset-4 border-2 border-[#d4af37] opacity-60 pointer-events-none"></div>
-             <div className="absolute inset-5 border border-[#d4af37] opacity-30 pointer-events-none"></div>
+             {/* Cute Border Accent */}
+             <div className="absolute inset-3 border-2 border-pink-200 border-dashed rounded-lg opacity-60 pointer-events-none"></div>
 
-             {/* SVG Handwriting Title */}
-             <div className="w-full max-w-md mb-8 z-10 drop-shadow-sm">
-                <svg viewBox="0 0 400 120" className="w-full h-auto">
-                    <motion.path
-                       initial={{ pathLength: 0 }}
-                       animate={{ pathLength: 1 }}
-                       transition={{ duration: 2.5, delay: 0.8, ease: "easeInOut" }}
-                       fill="none"
-                       stroke="#831843"
-                       strokeWidth="4"
-                       strokeLinecap="round"
-                       strokeLinejoin="round"
-                       d={cursivePath} 
-                    />
-                    <motion.text
-                       initial={{ opacity: 0 }}
-                       animate={{ opacity: 1 }}
-                       transition={{ delay: 3, duration: 1 }}
-                       x="50%" 
-                       y="70" 
-                       textAnchor="middle" 
-                       fontFamily="'Dancing Script', cursive" 
-                       fontSize="55" 
-                       fill="#831843"
-                       className="drop-shadow-sm"
-                    >
-                       Happy Birthday!
-                    </motion.text>
-                </svg>
+             {/* Scrollable Letter Content */}
+             <div className="w-full h-full overflow-y-auto scrollable-container pb-20 pt-8 px-4 sm:px-8 z-10 custom-scrollbar relative">
+                
+                {/* Header shifted up with cute font */}
+                <motion.h2 
+                   initial={{ opacity: 0, y: -20 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   transition={{ delay: 0.8, duration: 1 }}
+                   className="text-center font-display text-5xl sm:text-6xl text-pink-500 mb-12 drop-shadow-sm font-bold"
+                >
+                   Happy Birthday! 🎂
+                </motion.h2>
+
+                {/* Paragraphs that reveal on scroll */}
+                <div className="space-y-16 mt-8 font-sans text-xl sm:text-2xl text-slate-700 leading-relaxed text-center font-medium">
+                  
+                  <motion.p 
+                     initial={{ opacity: 0, y: 40 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true, margin: "-50px" }}
+                     transition={{ duration: 0.8 }}
+                  >
+                     Today is your special day, and you deserve nothing but the absolute best. 💖
+                  </motion.p>
+                  
+                  <motion.p 
+                     initial={{ opacity: 0, y: 40 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true, margin: "-50px" }}
+                     transition={{ duration: 0.8 }}
+                  >
+                     May your year ahead be filled with as much joy, magic, and beautiful chaos as this very moment! ✨
+                  </motion.p>
+
+                  <motion.p 
+                     initial={{ opacity: 0, scale: 0.8 }}
+                     whileInView={{ opacity: 1, scale: 1 }}
+                     viewport={{ once: true, margin: "-50px" }}
+                     transition={{ duration: 0.8, delay: 0.2 }}
+                     className="text-pink-400 font-display text-3xl"
+                  >
+                     You are amazing! 🌟
+                  </motion.p>
+
+                  <motion.p 
+                     initial={{ opacity: 0, y: 40 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true, margin: "-50px" }}
+                     transition={{ duration: 0.8 }}
+                  >
+                     Let's make some wonderful memories today. Keep being the unique, brilliant person you are. 🌷
+                  </motion.p>
+
+                  <motion.div 
+                     initial={{ opacity: 0, y: 20 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: false, margin: "0px" }}
+                     transition={{ duration: 0.8 }}
+                     className="pt-24 pb-8 flex flex-col items-center justify-center opacity-70 text-pink-400"
+                  >
+                     <p className="italic text-lg mb-2">Scroll down to see what's next...</p>
+                     <motion.div 
+                        animate={{ y: [0, 8, 0] }} 
+                        transition={{ repeat: Infinity, duration: 1.5 }}
+                        className="text-2xl"
+                     >
+                        👇
+                     </motion.div>
+                  </motion.div>
+
+                </div>
              </div>
 
-             <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 3.5, duration: 1 }}
-                className="text-[#4c0519] font-serif text-xl md:text-2xl text-center leading-relaxed px-4 z-10"
-             >
-                <p className="mb-4">
-                  May your year ahead be filled with as much joy, magic, and beautiful chaos as this very moment.
-                </p>
-                <p className="italic text-lg text-[#831843] opacity-80 mt-8">
-                  Scroll down to discover what's next...
-                </p>
-             </motion.div>
            </motion.div>
          )}
        </AnimatePresence>

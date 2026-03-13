@@ -10,33 +10,68 @@ import WishesClimax from './sections/WishesClimax';
 import ParallaxBackground from './components/ParallaxBackground';
 
 // GPU-accelerated section transitions using transform + opacity only
-// (No clipPath — it triggers CPU-bound repaints and causes jank)
+// Dynamic variants based on step to allow unique transitions like 3D page flips
 const sectionVariants = {
-  initial: {
-    opacity: 0,
-    scale: 1.06,
-    y: 60,
-    filter: "blur(8px)",
+  initial: (targetStep) => {
+    if (targetStep === 2) {
+      // Entering step 2 after the flip
+      return {
+        opacity: 0,
+        rotateX: -90,
+        y: 100,
+        transformPerspective: 1200,
+        transformOrigin: "top center",
+      };
+    }
+    return {
+      opacity: 0,
+      scale: 1.06,
+      y: 60,
+      filter: "blur(8px)",
+    };
   },
   animate: {
     opacity: 1,
     scale: 1,
     y: 0,
+    rotateX: 0,
     filter: "blur(0px)",
+    transformPerspective: 1200,
+    transformOrigin: "top center",
     transition: {
       duration: 0.8,
       ease: [0.25, 0.46, 0.45, 0.94], // easeOutQuad — smooth deceleration
     }
   },
-  exit: {
-    opacity: 0,
-    scale: 0.94,
-    y: -40,
-    filter: "blur(6px)",
-    transition: {
-      duration: 0.5,
-      ease: [0.55, 0.085, 0.68, 0.53], // easeInQuad — smooth acceleration out
+  exit: (targetStep) => {
+    // targetStep is the NEW step we are going to.
+    // If targetStep is 2, it means we are exiting step 1 (Envelope) to enter step 2.
+    if (targetStep === 2) {
+      // 3D Page flip up and away
+      return {
+        opacity: 0,
+        rotateX: 90,
+        y: -100,
+        filter: "blur(4px)",
+        transformPerspective: 1200,
+        transformOrigin: "top center",
+        transition: {
+          duration: 0.8,
+          ease: "easeInOut",
+        }
+      };
     }
+    // Default exit
+    return {
+      opacity: 0,
+      scale: 0.94,
+      y: -40,
+      filter: "blur(6px)",
+      transition: {
+        duration: 0.5,
+        ease: [0.55, 0.085, 0.68, 0.53], // easeInQuad — smooth acceleration out
+      }
+    };
   }
 };
 
@@ -186,7 +221,7 @@ function App() {
   }, [step, aboutYouCardIndex, envelopeStep, isSwirling, lockScroll]);
 
   const components = [
-    <CakeSection onBlowCandles={() => setStep(1)} />,
+    <CakeSection onBlowCandles={() => { lockScroll(3000); setStep(1); }} />,
     <MagicalEnvelopeReveal 
         envelopeStep={envelopeStep} 
         isSwirling={isSwirling} 
@@ -207,14 +242,15 @@ function App() {
     <div className="bg-[#e8f4f8] h-screen w-screen overflow-hidden text-slate-800 font-sans selection:bg-pink-300 selection:text-white relative">
       <ParallaxBackground globalProgress={globalProgress} />
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" custom={step}>
         <motion.div
-          key={step}
-          variants={sectionVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          className="scrollable-container absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden will-change-transform"
+           key={step}
+           custom={step} // Passing step here ensures the exit variant gets the correct exiting step value, not the new one
+           variants={sectionVariants}
+           initial="initial"
+           animate="animate"
+           exit="exit"
+           className="scrollable-container absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden will-change-transform"
         >
           {components[step]}
         </motion.div>
