@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -61,15 +61,15 @@ const lines = [
 function BackgroundStars({ count = 3000 }) {
   const ref = useRef();
   const elapsedRef = useRef(0);
-  const positions = useMemo(() => {
+  const [positions] = useState(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 80; // eslint-disable-line react-hooks/purity
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 50; // eslint-disable-line react-hooks/purity
-      pos[i * 3 + 2] = -Math.random() * 25 - 2; // eslint-disable-line react-hooks/purity
+      pos[i * 3] = (Math.random() - 0.5) * 80;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 50;
+      pos[i * 3 + 2] = -Math.random() * 25 - 2;
     }
     return pos;
-  }, [count]);
+  });
 
   useFrame((state, delta) => {
     elapsedRef.current += delta;
@@ -90,19 +90,19 @@ function BackgroundStars({ count = 3000 }) {
 // ==========================================
 // SOFT NEBULA GLOW — pastel galaxy feel
 // ==========================================
-function NebulaClouds() {
-  const clouds = useMemo(() => [
-    { pos: [-12, 6, -18], size: 4, color: '#4c1d95' },
-    { pos: [14, -5, -20], size: 5, color: '#831843' },
-    { pos: [-8, -7, -16], size: 3, color: '#1e3a5f' },
-    { pos: [8, 8, -22], size: 5, color: '#78350f' },
-    { pos: [0, 1, -14], size: 2.5, color: '#581c87' },
-    { pos: [-15, 0, -18], size: 4, color: '#9d174d' },
-  ], []);
+const CLOUDS_DATA = [
+  { pos: [-12, 6, -18], size: 4, color: '#4c1d95' },
+  { pos: [14, -5, -20], size: 5, color: '#831843' },
+  { pos: [-8, -7, -16], size: 3, color: '#1e3a5f' },
+  { pos: [8, 8, -22], size: 5, color: '#78350f' },
+  { pos: [0, 1, -14], size: 2.5, color: '#581c87' },
+  { pos: [-15, 0, -18], size: 4, color: '#9d174d' },
+];
 
+function NebulaClouds() {
   return (
     <group>
-      {clouds.map((n, i) => (
+      {CLOUDS_DATA.map((n, i) => (
         <mesh key={i} position={n.pos}>
           <sphereGeometry args={[n.size, 12, 12]} />
           <meshBasicMaterial color={n.color} transparent opacity={0.04} />

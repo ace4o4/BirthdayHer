@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useLayoutEffect } from 'react';
+import React, { useRef, useLayoutEffect, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Instances, Instance, Environment, Float } from '@react-three/drei';
 import * as THREE from 'three';
@@ -202,9 +202,8 @@ const MainEnvelope = ({ isSwirling, envelopeStep }) => {
 const Swarm = ({ isSwirling }) => {
   const count = 250;
   const instanceRefs = useRef([]);
-  instanceRefs.current = []; // Clear array on re-render to avoid stale refs
 
-  const instancesData = useMemo(() => {
+  const [instancesData] = useState(() => {
     const data = [];
     const vibrantPastels = ['#f472b6', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa', '#fb923c', '#fecdd3'];
     
@@ -228,7 +227,7 @@ const Swarm = ({ isSwirling }) => {
         data.push({ x, y, z, color, angle, radius, height, scale: 0 });
     }
     return data;
-  }, [count]);
+  });
 
   const addRef = (el) => {
       if (el && !instanceRefs.current.includes(el)) {
@@ -313,9 +312,6 @@ const Swarm = ({ isSwirling }) => {
 };
 
 export default function MagicalEnvelopeReveal({ envelopeStep, isSwirling, setIsSwirling }) {
-  // SVG Handwriting Animation Path
-  const cursivePath = "M20,60 C40,0 80,100 110,60 C120,40 140,40 160,60 C170,80 190,80 200,60 C220,10 260,110 280,60 C290,40 310,40 330,60 C340,80 370,80 380,60";
-
   return (
     <section 
       className="min-h-screen w-full relative bg-[#0f172a] overflow-hidden" 
@@ -383,15 +379,22 @@ export default function MagicalEnvelopeReveal({ envelopeStep, isSwirling, setIsS
                 </motion.h2>
 
                 {/* Paragraphs that reveal on scroll */}
-                <div className="space-y-16 mt-8 font-sans text-xl sm:text-2xl text-slate-700 leading-relaxed text-center font-medium">
+                <div className="space-y-10 mt-3 font-sans text-sm sm:text-2xl text-slate-700 leading-relaxed text-center font-medium">
                   
                   <motion.p 
                      initial={{ opacity: 0, y: 40 }}
                      whileInView={{ opacity: 1, y: 0 }}
-                     viewport={{ once: true, margin: "-50px" }}
+                     viewport={{ once: true, margin: "-10px" }}
                      transition={{ duration: 0.8 }}
                   >
-                     Today is your special day, and you deserve nothing but the absolute best. 💖
+                     Pooja Ji, you are our teammate so dear, 
+when you came in team we left out of Fear,<br></br>
+You are so good that we can't assume any tear. <br></br>
+your confidence feels like solitude, 
+kya hi bolte ho aap we love your attitude. <br></br><br></br>
+aap bina phone pick kare hi apni baat kar jaate ho, 
+aur hum par aapni purity ka asar chod jate ho.
+💖
                   </motion.p>
                   
                   <motion.p 
@@ -400,7 +403,19 @@ export default function MagicalEnvelopeReveal({ envelopeStep, isSwirling, setIsS
                      viewport={{ once: true, margin: "-50px" }}
                      transition={{ duration: 0.8 }}
                   >
-                     May your year ahead be filled with as much joy, magic, and beautiful chaos as this very moment! ✨
+                     Your heart is pure and grand,
+your music taste is ours new musical band. <br></br>
+
+theres a birthday wish so sincere and true, 
+to celebrate wonderful you.<br></br><br></br> 
+sach me hackathon me there were too many fight,
+but harish ke lal kaan was really a sight.<br></br><br></br>
+
+aap ne bola where we hesitated,
+thats a reason we are this dedicated.<br></br><br></br>
+we are alcohol and you are spark.
+your energy don't let anyone bark
+✨
                   </motion.p>
 
                   <motion.p 
@@ -419,7 +434,32 @@ export default function MagicalEnvelopeReveal({ envelopeStep, isSwirling, setIsS
                      viewport={{ once: true, margin: "-50px" }}
                      transition={{ duration: 0.8 }}
                   >
-                     Let's make some wonderful memories today. Keep being the unique, brilliant person you are. 🌷
+                     jab mai pareshan tha apne sirf 2 lines me mera dar nikal diya, 
+let it go ko implement karwa diya, 
+har step jo solo namunkin lagta tha vo apne cybersoulz ka bana liya. <br></br><br></br>
+jaha bhi we seem to loose you always ignite.
+i wish your wisdom make us together bright. <br></br>🌷
+                  </motion.p>
+
+
+                  <motion.p 
+                     initial={{ opacity: 0, scale: 0.8 }}
+                     whileInView={{ opacity: 1, scale: 1 }}
+                     viewport={{ once: true, margin: "-50px" }}
+                     transition={{ duration: 0.8, delay: 0.2 }}
+                     className="text-pink-400 font-display text-3xl"
+                  >
+                     Just one last Baat! 🌟
+                  </motion.p>
+
+                  <motion.p 
+                     initial={{ opacity: 0, y: 40 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true, margin: "-50px" }}
+                     transition={{ duration: 0.8 }}
+                  >
+                    you are friend so kind 
+we wish you a happy birthday and may you always shine 🌷
                   </motion.p>
 
                   <motion.div 
@@ -438,6 +478,8 @@ export default function MagicalEnvelopeReveal({ envelopeStep, isSwirling, setIsS
                         👇
                      </motion.div>
                   </motion.div>
+
+                  
 
                 </div>
              </div>

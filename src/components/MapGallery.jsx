@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo, Suspense } from 'react';
+import { useRef, useEffect, useState, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
@@ -93,26 +93,61 @@ function MemoryPin({ position, color, scrollProgress, index }) {
 // ==========================================
 // FLOATING PHOTO FRAMES
 // ==========================================
-// Put your photos in: public/assets/gallery/ named 1.jpg to 8.jpg
+// Put your photos in: public/assets/gallery/ named 1.png to 8.png
 const photos = [
-  { x: -2.5, y: 1.2, z: -12, ry: 0.12, label: 'By the Lake', color: '#fce7f3', img: assetUrl('/assets/gallery/1.jpg') },
-  { x: 2.5, y: -0.5, z: -20, ry: -0.1, label: 'Morning View', color: '#dbeafe', img: assetUrl('/assets/gallery/2.jpg') },
-  { x: -1.8, y: 0.6, z: -28, ry: 0.08, label: 'Peaceful Ganges', color: '#d1fae5', img: assetUrl('/assets/gallery/3.jpg') },
-  { x: 3, y: 1, z: -36, ry: -0.12, label: 'Fresh Snow', color: '#ede9fe', img: assetUrl('/assets/gallery/4.jpg') },
-  { x: -2.8, y: -0.3, z: -44, ry: 0.1, label: 'Rare Blooms', color: '#fef3c7', img: assetUrl('/assets/gallery/5.jpg') },
-  { x: 1.5, y: 0.8, z: -52, ry: -0.08, label: 'Safari Day', color: '#fce7f3', img: assetUrl('/assets/gallery/6.jpg') },
-  { x: -3, y: -0.8, z: -60, ry: 0.15, label: 'Sunset Magic', color: '#ccfbf1', img: assetUrl('/assets/gallery/7.jpg') },
-  { x: 2.8, y: 0.4, z: -68, ry: -0.12, label: 'Valley Dreams', color: '#e0e7ff', img: assetUrl('/assets/gallery/8.jpg') },
+  { x: -2.5, y: 1.2, z: -12, ry: 0.12, label: 'By the Lake', color: '#fce7f3', img: assetUrl('/assets/gallery/1.png') },
+  { x: 2.5, y: -0.5, z: -20, ry: -0.1, label: 'Morning View', color: '#dbeafe', img: assetUrl('/assets/gallery/2.png') },
+  { x: -1.8, y: 0.6, z: -28, ry: 0.08, label: 'Peaceful Ganges', color: '#d1fae5', img: assetUrl('/assets/gallery/3.png') },
+  { x: 3, y: 1, z: -36, ry: -0.12, label: 'Fresh Snow', color: '#ede9fe', img: assetUrl('/assets/gallery/4.png') },
+  { x: -2.8, y: -0.3, z: -44, ry: 0.1, label: 'Rare Blooms', color: '#fef3c7', img: assetUrl('/assets/gallery/5.png') },
+  { x: 1.5, y: 0.8, z: -52, ry: -0.08, label: 'Safari Day', color: '#fce7f3', img: assetUrl('/assets/gallery/6.png') },
+  { x: -3, y: -0.8, z: -60, ry: 0.15, label: 'Sunset Magic', color: '#ccfbf1', img: assetUrl('/assets/gallery/7.png') },
+  { x: 2.8, y: 0.4, z: -68, ry: -0.12, label: 'Valley Dreams', color: '#e0e7ff', img: assetUrl('/assets/gallery/8.png') },
 ];
 
-// Loads real image texture; must be used inside a <Suspense> boundary
-function PhotoImage({ imgPath }) {
+// Loads real image texture and computes dynamic dimensions to prevent stretching
+function DynamicPhotoFrame({ imgPath }) {
   const texture = useTexture(imgPath);
+  
+  // Get original image dimensions and aspect ratio
+  const imgW = texture.image?.width || 800;
+  const imgH = texture.image?.height || 600;
+  const aspect = imgW / imgH;
+
+  // Max width 2.4, max height 2.0 to fit well within the 3D gallery bounds
+  let w = 2.4;
+  let h = w / aspect;
+  if (h > 2.0) {
+    h = 2.0;
+    w = h * aspect;
+  }
+
+  const frameW = w + 0.3;
+  const frameH = h + 0.4;
+
   return (
-    <mesh position={[0, 0.05, 0]}>
-      <planeGeometry args={[2.3, 1.7]} />
-      <meshBasicMaterial map={texture} transparent />
-    </mesh>
+    <group>
+      {/* White frame border */}
+      <mesh position={[0, 0, -0.02]}>
+        <planeGeometry args={[frameW, frameH]} />
+        <meshStandardMaterial color="#ffffff" transparent />
+      </mesh>
+      {/* Photo */}
+      <mesh position={[0, 0.05, 0]}>
+        <planeGeometry args={[w, h]} />
+        <meshBasicMaterial map={texture} transparent />
+      </mesh>
+      {/* Cute tape on top */}
+      <mesh position={[0, frameH / 2 - 0.05, 0.02]} rotation={[0, 0, 0.06]}>
+        <planeGeometry args={[Math.min(0.7, w * 0.4), 0.12]} />
+        <meshBasicMaterial color="#fbcfe8" transparent opacity={0.8} />
+      </mesh>
+      {/* Label bar */}
+      <mesh position={[0, -frameH / 2 + 0.15, 0.02]}>
+        <planeGeometry args={[w * 0.6, 0.20]} />
+        <meshBasicMaterial color="#f8fafc" transparent opacity={0.9} />
+      </mesh>
+    </group>
   );
 }
 
@@ -168,30 +203,21 @@ function PhotoFrame({ position, rotationY, scrollProgress, index, color, img }) 
 
   return (
     <group ref={groupRef} position={position}>
-      {/* White frame border */}
-      <mesh position={[0, 0, -0.02]}>
-        <planeGeometry args={[2.6, 2.2]} />
-        <meshStandardMaterial color="#ffffff" transparent />
-      </mesh>
-      {/* Photo — loads real image or falls back to color */}
       <Suspense fallback={
-        <mesh position={[0, 0.05, 0]}>
-          <planeGeometry args={[2.3, 1.7]} />
-          <meshStandardMaterial color={color} transparent />
-        </mesh>
+        <group>
+          {/* Skeleton placeholder frame while loading */}
+          <mesh position={[0, 0, -0.02]}>
+            <planeGeometry args={[2.6, 2.2]} />
+            <meshStandardMaterial color="#ffffff" transparent />
+          </mesh>
+          <mesh position={[0, 0.05, 0]}>
+            <planeGeometry args={[2.3, 1.7]} />
+            <meshStandardMaterial color={color} transparent />
+          </mesh>
+        </group>
       }>
-        <PhotoImage imgPath={img} />
+        <DynamicPhotoFrame imgPath={img} />
       </Suspense>
-      {/* Cute tape on top */}
-      <mesh position={[0, 1.0, 0.02]} rotation={[0, 0, 0.06]}>
-        <planeGeometry args={[0.7, 0.12]} />
-        <meshBasicMaterial color="#fbcfe8" transparent opacity={0.8} />
-      </mesh>
-      {/* Label bar */}
-      <mesh position={[0, -0.7, 0.01]}>
-        <planeGeometry args={[1.2, 0.25]} />
-        <meshBasicMaterial color="#f8fafc" transparent opacity={0.9} />
-      </mesh>
     </group>
   );
 }
@@ -202,15 +228,15 @@ function PhotoFrame({ position, rotationY, scrollProgress, index, color, img }) 
 function Particles({ count = 250 }) {
   const mesh = useRef();
   const elapsedRef = useRef(0);
-  const positions = useMemo(() => {
+  const [positions] = useState(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 30; // eslint-disable-line react-hooks/purity
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 15; // eslint-disable-line react-hooks/purity
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 80 - 10; // eslint-disable-line react-hooks/purity
+      pos[i * 3] = (Math.random() - 0.5) * 30;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 15;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 80 - 10;
     }
     return pos;
-  }, [count]);
+  });
 
   useFrame((state, delta) => {
     elapsedRef.current += delta;

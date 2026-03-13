@@ -45,6 +45,8 @@ const FLOATING_STICKERS = [
 // Floating Sticker Component
 // ─────────────────────────────────────────────────────────────
 function FloatingSticker({ emoji, x, y, size, delay, rotate, isExtinguished }) {
+  const [duration] = useState(() => 3 + Math.random() * 2);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0, rotate: rotate - 30 }}
@@ -58,7 +60,7 @@ function FloatingSticker({ emoji, x, y, size, delay, rotate, isExtinguished }) {
         opacity: { duration: 0.5, delay },
         scale: { duration: 0.6, delay, type: 'spring', stiffness: 200 },
         rotate: { duration: 0.6, delay },
-        y: { duration: 3 + Math.random() * 2, repeat: Infinity, ease: 'easeInOut', delay: delay + 0.5 },
+        y: { duration: duration, repeat: Infinity, ease: 'easeInOut', delay: delay + 0.5 },
       }}
       className="absolute pointer-events-none select-none z-5"
       style={{ 
@@ -161,45 +163,9 @@ function TinyHeart({ position, color = '#f9a8d4', scale = 0.12 }) {
   );
 }
 
-function Cake3D({ isExtinguished }) {
-  const flame1Ref = useRef();
-  const flame2Ref = useRef();
-  const flame3Ref = useRef();
-
-  useFrame((state, delta) => {
-    const t = state.clock.getElapsedTime();
-    if (!isExtinguished) {
-      const flicker1 = 1 + Math.sin(t * 10) * 0.1;
-      const flicker2 = 1 + Math.cos(t * 12) * 0.1;
-      const flicker3 = 1 + Math.sin(t * 15) * 0.1;
-      
-      if (flame1Ref.current) flame1Ref.current.scale.set(flicker1, flicker1, flicker1);
-      if (flame2Ref.current) flame2Ref.current.scale.set(flicker2, flicker2, flicker2);
-      if (flame3Ref.current) flame3Ref.current.scale.set(flicker3, flicker3, flicker3);
-    } else {
-      if (flame1Ref.current) {
-         flame1Ref.current.rotation.x = THREE.MathUtils.lerp(flame1Ref.current.rotation.x, -Math.PI / 4, delta * 15);
-         flame1Ref.current.position.y = THREE.MathUtils.lerp(flame1Ref.current.position.y, 0.2, delta * 10);
-         flame1Ref.current.position.z = THREE.MathUtils.lerp(flame1Ref.current.position.z, -0.2, delta * 10);
-         flame1Ref.current.scale.lerp(new THREE.Vector3(0,0,0), delta * 5);
-      }
-      if (flame2Ref.current) {
-         flame2Ref.current.rotation.x = THREE.MathUtils.lerp(flame2Ref.current.rotation.x, -Math.PI / 4, delta * 15);
-         flame2Ref.current.position.y = THREE.MathUtils.lerp(flame2Ref.current.position.y, 0.2, delta * 10);
-         flame2Ref.current.position.z = THREE.MathUtils.lerp(flame2Ref.current.position.z, -0.2, delta * 10);
-         flame2Ref.current.scale.lerp(new THREE.Vector3(0,0,0), delta * 5);
-      }
-      if (flame3Ref.current) {
-         flame3Ref.current.rotation.x = THREE.MathUtils.lerp(flame3Ref.current.rotation.x, -Math.PI / 4, delta * 15);
-         flame3Ref.current.position.y = THREE.MathUtils.lerp(flame3Ref.current.position.y, 0.2, delta * 10);
-         flame3Ref.current.position.z = THREE.MathUtils.lerp(flame3Ref.current.position.z, -0.2, delta * 10);
-         flame3Ref.current.scale.lerp(new THREE.Vector3(0,0,0), delta * 5);
-      }
-    }
-  });
-
-  // Cute chunky doodle candle
-  const Candle = ({ position, flameRef }) => (
+// Cute chunky doodle candle
+function Candle({ position, flameRef, isExtinguished }) {
+  return (
     <group position={position}>
       {/* Chunky candle body — low-poly for doodle feel */}
       <Cylinder args={[0.08, 0.08, 0.55, 8]} position={[0, 0.28, 0]}>
@@ -253,6 +219,44 @@ function Cake3D({ isExtinguished }) {
       </group>
     </group>
   );
+}
+
+function Cake3D({ isExtinguished }) {
+  const flame1Ref = useRef();
+  const flame2Ref = useRef();
+  const flame3Ref = useRef();
+
+  useFrame((state, delta) => {
+    const t = state.clock.getElapsedTime();
+    if (!isExtinguished) {
+      const flicker1 = 1 + Math.sin(t * 10) * 0.1;
+      const flicker2 = 1 + Math.cos(t * 12) * 0.1;
+      const flicker3 = 1 + Math.sin(t * 15) * 0.1;
+      
+      if (flame1Ref.current) flame1Ref.current.scale.set(flicker1, flicker1, flicker1);
+      if (flame2Ref.current) flame2Ref.current.scale.set(flicker2, flicker2, flicker2);
+      if (flame3Ref.current) flame3Ref.current.scale.set(flicker3, flicker3, flicker3);
+    } else {
+      if (flame1Ref.current) {
+         flame1Ref.current.rotation.x = THREE.MathUtils.lerp(flame1Ref.current.rotation.x, -Math.PI / 4, delta * 15);
+         flame1Ref.current.position.y = THREE.MathUtils.lerp(flame1Ref.current.position.y, 0.2, delta * 10);
+         flame1Ref.current.position.z = THREE.MathUtils.lerp(flame1Ref.current.position.z, -0.2, delta * 10);
+         flame1Ref.current.scale.lerp(new THREE.Vector3(0,0,0), delta * 5);
+      }
+      if (flame2Ref.current) {
+         flame2Ref.current.rotation.x = THREE.MathUtils.lerp(flame2Ref.current.rotation.x, -Math.PI / 4, delta * 15);
+         flame2Ref.current.position.y = THREE.MathUtils.lerp(flame2Ref.current.position.y, 0.2, delta * 10);
+         flame2Ref.current.position.z = THREE.MathUtils.lerp(flame2Ref.current.position.z, -0.2, delta * 10);
+         flame2Ref.current.scale.lerp(new THREE.Vector3(0,0,0), delta * 5);
+      }
+      if (flame3Ref.current) {
+         flame3Ref.current.rotation.x = THREE.MathUtils.lerp(flame3Ref.current.rotation.x, -Math.PI / 4, delta * 15);
+         flame3Ref.current.position.y = THREE.MathUtils.lerp(flame3Ref.current.position.y, 0.2, delta * 10);
+         flame3Ref.current.position.z = THREE.MathUtils.lerp(flame3Ref.current.position.z, -0.2, delta * 10);
+         flame3Ref.current.scale.lerp(new THREE.Vector3(0,0,0), delta * 5);
+      }
+    }
+  });
 
   return (
     <group position={[0, -1, 0]}>
@@ -351,9 +355,9 @@ function Cake3D({ isExtinguished }) {
       ))}
 
       {/* Candles — cuter and chunkier */}
-      <Candle position={[-0.4, 2.05, 0.4]} flameRef={flame1Ref} />
-      <Candle position={[0.4, 2.05, 0.3]} flameRef={flame2Ref} />
-      <Candle position={[0, 2.05, -0.5]} flameRef={flame3Ref} />
+      <Candle position={[-0.4, 2.05, 0.4]} flameRef={flame1Ref} isExtinguished={isExtinguished} />
+      <Candle position={[0.4, 2.05, 0.3]} flameRef={flame2Ref} isExtinguished={isExtinguished} />
+      <Candle position={[0, 2.05, -0.5]} flameRef={flame3Ref} isExtinguished={isExtinguished} />
     </group>
   );
 }
@@ -393,75 +397,7 @@ export default function CakeSection({ onBlowCandles }) {
   const microphoneRef = useRef(null);
   const animationFrameRef = useRef(null);
 
-  useEffect(() => {
-    let isWarmupComplete = false;
-    const warmupTimer = setTimeout(() => {
-      isWarmupComplete = true;
-    }, 2500);
-
-    const autoBlowTimer = setTimeout(() => {
-      if (isBlowing && !isExtinguished) {
-         triggerExtinguish();
-      }
-    }, 12000);
-
-    if (isBlowing && !isExtinguished && analyserRef.current) {
-      const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-      
-      const checkVolume = () => {
-        if (!isBlowing || isExtinguished) return;
-        analyserRef.current.getByteFrequencyData(dataArray);
-        
-        if (isWarmupComplete) {
-          let sum = 0;
-          let peak = 0;
-          for (let i = 0; i < dataArray.length; i++) {
-            sum += dataArray[i];
-            if (dataArray[i] > peak) peak = dataArray[i];
-          }
-          const averageVolume = sum / dataArray.length;
-          if (peak > 230 || averageVolume > 60) {
-            triggerExtinguish();
-            return;
-          }
-        }
-        
-        animationFrameRef.current = requestAnimationFrame(checkVolume);
-      };
-      
-      checkVolume();
-    }
-
-    return () => {
-      clearTimeout(warmupTimer);
-      clearTimeout(autoBlowTimer);
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    };
-  }, [isBlowing, isExtinguished]);
-
-  const startListening = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const analyserNode = audioCtx.createAnalyser();
-      const source = audioCtx.createMediaStreamSource(stream);
-      
-      analyserNode.fftSize = 256;
-      source.connect(analyserNode);
-
-      audioContextRef.current = audioCtx;
-      analyserRef.current = analyserNode;
-      microphoneRef.current = source;
-      
-      setIsBlowing(true);
-      setMicError(false);
-    } catch (err) {
-      console.error('Microphone access denied or not supported', err);
-      setMicError(true);
-    }
-  };
-
-  const triggerExtinguish = () => {
+  function triggerExtinguish() {
     setIsExtinguished(true);
     setIsBlowing(false);
     
@@ -535,6 +471,74 @@ export default function CakeSection({ onBlowCandles }) {
     setTimeout(() => {
       onBlowCandles();
     }, 3500); 
+  }
+
+  useEffect(() => {
+    let isWarmupComplete = false;
+    const warmupTimer = setTimeout(() => {
+      isWarmupComplete = true;
+    }, 2500);
+
+    const autoBlowTimer = setTimeout(() => {
+      if (isBlowing && !isExtinguished) {
+         triggerExtinguish();
+      }
+    }, 12000);
+
+    if (isBlowing && !isExtinguished && analyserRef.current) {
+      const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+      
+      const checkVolume = () => {
+        if (!isBlowing || isExtinguished) return;
+        analyserRef.current.getByteFrequencyData(dataArray);
+        
+        if (isWarmupComplete) {
+          let sum = 0;
+          let peak = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+            if (dataArray[i] > peak) peak = dataArray[i];
+          }
+          const averageVolume = sum / dataArray.length;
+          if (peak > 230 || averageVolume > 60) {
+            triggerExtinguish();
+            return;
+          }
+        }
+        
+        animationFrameRef.current = requestAnimationFrame(checkVolume);
+      };
+      
+      checkVolume();
+    }
+
+    return () => {
+      clearTimeout(warmupTimer);
+      clearTimeout(autoBlowTimer);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    };
+  }, [isBlowing, isExtinguished]);
+
+  const startListening = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const analyserNode = audioCtx.createAnalyser();
+      const source = audioCtx.createMediaStreamSource(stream);
+      
+      analyserNode.fftSize = 256;
+      source.connect(analyserNode);
+
+      audioContextRef.current = audioCtx;
+      analyserRef.current = analyserNode;
+      microphoneRef.current = source;
+      
+      setIsBlowing(true);
+      setMicError(false);
+    } catch (err) {
+      console.error('Microphone access denied or not supported', err);
+      setMicError(true);
+    }
   };
 
   return (

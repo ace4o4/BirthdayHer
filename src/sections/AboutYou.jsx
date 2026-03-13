@@ -4,37 +4,37 @@ import { assetUrl } from '../utils/assetUrl';
 const cards = [
   {
     title: "Super Cute",
-    desc: "Inside and out, you radiate the cutest energy! 🐰",
+    desc: "Aapki Cuteness ka kya hi kehna, Gaal Noch lein aapka, Miss Rabbit 🐰",
     icon: assetUrl("/assets/icons/super_cute.png"),
   },
   {
     title: "Amazing Smile",
-    desc: "Your smile lights up the whole room! 🌸",
+    desc: "Aapki Smile bhi bahaut pyari hai, Nazar na lage kisi ki 🌸",
     icon: assetUrl("/assets/icons/amazing_smile.png"),
   },
   {
     title: "Kind Heart",
-    desc: "Always caring and bringing warmth everywhere. 🧸",
+    desc: "You really Do have a kind heart, Apko Fikar karni aati hai 🧸",
     icon: assetUrl("/assets/icons/kind_heart.png"),
   },
   {
     title: "Brilliant Mind",
-    desc: "So smart, creative, and always full of wonderful ideas! 💡",
+    desc: "Eagerness to know new things, You deserve the best 💡",
     icon: assetUrl("/assets/icons/brilliant_mind.png"),
   },
   {
     title: "Great Listener",
-    desc: "Always there to listen and give the best advice. 🎧",
+    desc: "Aaap jab sunte ho to bahaut pyare lagte ho, Bahaut aacah lagta hai 🎧",
     icon: assetUrl("/assets/icons/great_listener.png"),
   },
   {
     title: "Fun Spirit",
-    desc: "Every moment spent with you is filled with laughs and joy! 🎈",
+    desc: "Har Moment ko enjoyable bana Dete ho app, Isiliya aap differently Built ho 🎈",
     icon: assetUrl("/assets/icons/fun_spirit.png"),
   },
   {
     title: "Absolutely Unique",
-    desc: "There is truly no one else like you in the whole world. 🌟",
+    desc: "Aaap special ho, Aap unique ho and Aap Hamara ho, Bas yahi kaafi hai 🌟",
     icon: assetUrl("/assets/icons/unique_diamond.png"),
   }
 ];

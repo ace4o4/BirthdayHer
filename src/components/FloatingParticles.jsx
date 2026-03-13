@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { useState } from 'react';
 
 export default function FloatingParticles({ count = 30 }) {
   // Generate random properties for particles once
-  const particles = useMemo(() => {
+  const [particles] = useState(() => {
     return Array.from({ length: count }).map((_, i) => ({
       id: i,
       x: Math.random() * 100, // eslint-disable-line react-hooks/purity
@@ -17,7 +17,7 @@ export default function FloatingParticles({ count = 30 }) {
       animY1: Math.random() * -100 - 50, // eslint-disable-line react-hooks/purity
       animY2: Math.random() * -100 - 50, // eslint-disable-line react-hooks/purity
     }));
-  }, [count]);
+  });
 
   return (
     <div className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-hidden">
