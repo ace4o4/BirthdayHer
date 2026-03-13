@@ -1,11 +1,10 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
 export default function ScratchOffReveal({ onReveal }) {
   const canvasRef = useRef(null);
   const [isRevealed, setIsRevealed] = useState(false);
-  const [isDrawing, setIsDrawing] = useState(false);
   const [showPattern, setShowPattern] = useState(true);
 
   // Use refs for mutable values that shouldn't trigger re-renders

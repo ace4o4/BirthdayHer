@@ -269,7 +269,7 @@ function App() {
       )}
 
       {/* Scroll indicator hint for step 1 */}
-      {step === 1 && !scrollLocked.current && isSwirling && envelopeStep === 0 && (
+      {step === 1 && isSwirling && envelopeStep === 0 && (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, y: [0, 10, 0] }}

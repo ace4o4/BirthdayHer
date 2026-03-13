@@ -60,21 +60,21 @@ const lines = [
 // ==========================================
 function BackgroundStars({ count = 3000 }) {
   const ref = useRef();
-  const { positions, opacities } = useMemo(() => {
+  const elapsedRef = useRef(0);
+  const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
-    const ops = new Float32Array(count);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 80;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 50;
-      pos[i * 3 + 2] = -Math.random() * 25 - 2;
-      ops[i] = Math.random();
+      pos[i * 3] = (Math.random() - 0.5) * 80; // eslint-disable-line react-hooks/purity
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 50; // eslint-disable-line react-hooks/purity
+      pos[i * 3 + 2] = -Math.random() * 25 - 2; // eslint-disable-line react-hooks/purity
     }
-    return { positions: pos, opacities: ops };
+    return pos;
   }, [count]);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!ref.current) return;
-    ref.current.rotation.y = state.clock.elapsedTime * 0.002;
+    ref.current.rotation.y = elapsedRef.current * 0.002;
   });
 
   return (
@@ -118,11 +118,13 @@ function NebulaClouds() {
 function DivineGlow({ scrollProgress }) {
   const glowRef = useRef();
   const raysRef = useRef();
+  const elapsedRef = useRef(0);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!glowRef.current) return;
     const p = scrollProgress.current;
-    const time = state.clock.elapsedTime;
+    const time = elapsedRef.current;
 
     // Glow appears after all lines are drawn (90%+)
     const glowProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));
@@ -161,11 +163,13 @@ function Constellation({ scrollProgress }) {
   const starMeshes = useRef([]);
   const glowMeshes = useRef([]);
   const lineRefs = useRef([]);
+  const elapsedRef = useRef(0);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
+    elapsedRef.current += delta;
     if (!groupRef.current) return;
     const p = scrollProgress.current;
-    const time = state.clock.elapsedTime;
+    const time = elapsedRef.current;
     const totalLines = lines.length; // 9 lines
 
     // Each line occupies a portion of 5% to 90% scroll
@@ -193,7 +197,6 @@ function Constellation({ scrollProgress }) {
       // Divine mode when all lines complete
       const divineProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));
 
-      const baseScale = star.bright ? 0.08 : 0.06;
       const activeBoost = isActive ? 1.4 : 0.8;
       const divineBoost = 1 + divineProgress * 0.6;
 
@@ -415,7 +418,7 @@ function CosmicCamera({ scrollProgress }) {
   const { camera } = useThree();
   useFrame(() => {
     const p = scrollProgress.current;
-    camera.position.x = Math.sin(p * Math.PI * 0.2) * 0.5;
+    camera.position.x = Math.sin(p * Math.PI * 0.2) * 0.5; // eslint-disable-line react-hooks/immutability
     camera.position.y = 0.8 + Math.cos(p * Math.PI * 0.15) * 0.3;
     camera.position.z = 10 - p * 0.8;
     camera.lookAt(0, 0.5, 0);

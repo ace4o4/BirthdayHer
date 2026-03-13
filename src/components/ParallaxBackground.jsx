@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
+import { assetUrl } from '../utils/assetUrl';
 
 export default function ParallaxBackground({ globalProgress }) {
   // globalProgress is 0 at the start (cake) and 1 at the end (gallery)
   // We'll move the layers vertically based on this progress.
   
-  // Slower movement for clouds
+  // Slower movement for sky/background
   const cloudsY = -globalProgress * 300; 
   // Medium movement for mountains
   const mountainsY = -globalProgress * 600;
@@ -13,26 +14,26 @@ export default function ParallaxBackground({ globalProgress }) {
 
   return (
     <div className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-0">
-      {/* Sky/Clouds Layer (Slowest) */}
+      {/* Sky/Background Layer (Slowest) */}
       <motion.div 
         className="absolute inset-0 w-full h-[150%] top-[-5%]"
         style={{ y: cloudsY }}
       >
         <img 
-          src="/assets/parallax_clouds_1773219856526.png" 
-          alt="Clouds" 
+          src={assetUrl('/assets/back_1.png')} 
+          alt="Sky background" 
           className="w-full h-full object-cover opacity-60 mix-blend-multiply"
         />
       </motion.div>
 
-      {/* Mountains Layer (Medium) */}
+      {/* Mountains/Landscape Layer (Medium) */}
       <motion.div 
         className="absolute inset-x-0 w-full h-[150%] bottom-[-50%]"
         style={{ y: mountainsY }}
       >
         <img 
-          src="/assets/parallax_mountains_1773219873040.png" 
-          alt="Mountains" 
+          src={assetUrl('/assets/anime_landscape.png')} 
+          alt="Landscape" 
           className="w-full h-full object-cover opacity-80"
         />
       </motion.div>
@@ -43,7 +44,7 @@ export default function ParallaxBackground({ globalProgress }) {
         style={{ y: flowersY }}
       >
         <img 
-          src="/assets/parallax_flowers_1773219887277.png" 
+          src={assetUrl('/assets/anime_landscape_flowers.png')} 
           alt="Flowers" 
           className="w-full h-full object-cover"
         />
