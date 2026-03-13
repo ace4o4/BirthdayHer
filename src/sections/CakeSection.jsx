@@ -4,6 +4,7 @@ import { Html, Sparkles, Float, Cylinder, Cone, Sphere, Environment, ContactShad
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import audioManager from '../utils/audioManager';
 
 // ─────────────────────────────────────────────────────────────
 // Floating Stickers & Emojis Data
@@ -411,6 +412,9 @@ export default function CakeSection({ onBlowCandles }) {
       cancelAnimationFrame(animationFrameRef.current);
     }
 
+    // 🔊 Play whoosh sound
+    audioManager.play('whoosh');
+
     // 🎊 Confetti celebration burst!
     const pastelColors = ['#fbcfe8', '#e9d5ff', '#bfdbfe', '#fef08a', '#fecaca', '#a7f3d0', '#c4b5fd'];
     
@@ -425,6 +429,9 @@ export default function CakeSection({ onBlowCandles }) {
       ticks: 200,
       scalar: 1.2,
     });
+    
+    // 🔊 Play popper sound
+    audioManager.play('popper');
 
     // Second burst — left side (delayed)
     setTimeout(() => {

@@ -2,16 +2,18 @@ import { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { assetUrl } from '../utils/assetUrl';
+import audioManager from '../utils/audioManager';
 
 export default function WishesClimax() {
   const containerRef = useRef(null);
   const [hasLanded, setHasLanded] = useState(false);
 
-
-
   // Trigger physics-based confetti when the image lands
   useEffect(() => {
     if (hasLanded) {
+      // 🔊 Play popper sound
+      audioManager.play('popper');
+      
       const duration = 3000;
       const end = Date.now() + duration;
 

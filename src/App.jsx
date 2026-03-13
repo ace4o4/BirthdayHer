@@ -8,6 +8,8 @@ import CosmicConstellation from './components/CosmicConstellation';
 import MapGallery from './components/MapGallery';
 import WishesClimax from './sections/WishesClimax';
 import ParallaxBackground from './components/ParallaxBackground';
+import audioManager from './utils/audioManager';
+import { IoVolumeHighOutline, IoVolumeMuteOutline } from 'react-icons/io5';
 
 // GPU-accelerated section transitions using transform + opacity only
 // Dynamic variants based on step to allow unique transitions like 3D page flips
@@ -87,6 +89,60 @@ const LOCK_CARD_SLIDE = 600;            // AboutYou card carousel slide
 function App() {
   const [step, setStep] = useState(0);
   const [aboutYouCardIndex, setAboutYouCardIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(audioManager.isMuted());
+
+  // 🔊 Trigger swipe sound on step changes
+  useEffect(() => {
+    if (step > 0) { // Don't play on initial load, only on transitions
+      audioManager.play('swipe');
+    }
+  }, [step]);
+
+  // 🔊 Global Interaction Listener for Audio Autoplay
+  useEffect(() => {
+    const handleInteraction = () => {
+      // 🎶 Start ambient music on any user interaction (to bypass browser block)
+      audioManager.play('ambient');
+    };
+
+    // 🕒 Wait 1 second after load then try to autoplay
+    const autoPlayTimer = setTimeout(() => {
+      handleInteraction();
+    }, 1000);
+
+    const handleGlobalClick = (e) => {
+      handleInteraction();
+      
+      // List of elements that should trigger a click sound
+      const interactiveTags = ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'];
+      const isInteractive = interactiveTags.includes(e.target.tagName) || 
+                            e.target.closest('button') || 
+                            e.target.closest('a') ||
+                            e.target.classList.contains('cursor-pointer') ||
+                            window.getComputedStyle(e.target).cursor === 'pointer';
+
+      if (isInteractive) {
+        audioManager.play('click');
+      }
+    };
+
+    window.addEventListener('click', handleGlobalClick);
+    window.addEventListener('scroll', handleInteraction, { passive: true });
+    window.addEventListener('touchstart', handleInteraction, { passive: true });
+    
+    return () => {
+      clearTimeout(autoPlayTimer);
+      window.removeEventListener('click', handleGlobalClick);
+      window.removeEventListener('scroll', handleInteraction);
+      window.removeEventListener('touchstart', handleInteraction);
+    };
+  }, []);
+
+  const toggleAudio = () => {
+    const newMuted = !isMuted;
+    audioManager.muteAll(newMuted);
+    setIsMuted(newMuted);
+  };
   
   // Magical Envelope Reveal States
   const [isSwirling, setIsSwirling] = useState(false);
@@ -134,11 +190,13 @@ function App() {
         if (delta > 30 && aboutYouCardIndex < TOTAL_ABOUT_YOU_CARDS - 1) {
           lockScroll(LOCK_CARD_SLIDE);
           setAboutYouCardIndex(prev => prev + 1);
+          audioManager.play('click');
           return;
         }
         if (delta < -30 && aboutYouCardIndex > 0) {
           lockScroll(LOCK_CARD_SLIDE);
           setAboutYouCardIndex(prev => prev - 1);
+          audioManager.play('click');
           return;
         }
       }
@@ -279,6 +337,14 @@ function App() {
           Scroll Down to Read Letter ↓
         </motion.div>
       )}
+
+      {/* Global Mute Toggle */}
+      <button 
+        onClick={toggleAudio}
+        className="fixed top-6 right-6 z-[100] p-3 bg-white/40 backdrop-blur-md rounded-full shadow-lg border border-white/20 hover:bg-white/60 transition-all text-slate-700 hover:scale-110 active:scale-95"
+      >
+        {isMuted ? <IoVolumeMuteOutline size={24} /> : <IoVolumeHighOutline size={24} />}
+      </button>
     </div>
   );
 }

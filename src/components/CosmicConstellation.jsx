@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
+import audioManager from '../utils/audioManager';
 
 // ==========================================
 // PURVA PHALGUNI CONSTELLATION
@@ -162,23 +163,31 @@ function Constellation({ scrollProgress }) {
     const linePhaseStart = 0.05;
     const linePhaseEnd = 0.88;
 
-    // --- Update stars: twinkle + brighten when their line arrives ---
-    stars.forEach((star, i) => {
-      const mesh = starMeshes.current[i];
-      const glow = glowMeshes.current[i];
-      if (!mesh) return;
+      // --- Update stars: twinkle + brighten when their line arrives ---
+      stars.forEach((star, i) => {
+        const mesh = starMeshes.current[i];
+        const glow = glowMeshes.current[i];
+        if (!mesh) return;
+  
+        // Base twinkle
+        const twinkle = 1 + Math.sin(time * 3 + i * 1.3) * 0.2;
+  
+        // Check if this star is "active" (connected by any drawn line)
+        let isActive = false;
+        lines.forEach(([a, b], lineIdx) => {
+          const lineStart = linePhaseStart + (lineIdx / totalLines) * (linePhaseEnd - linePhaseStart);
+          const lineEnd = linePhaseStart + ((lineIdx + 1) / totalLines) * (linePhaseEnd - linePhaseStart);
+          const lineProgress = Math.min(1, Math.max(0, (p - lineStart) / (lineEnd - lineStart)));
+          if ((a === i || b === i) && lineProgress > 0.5) isActive = true;
+        });
 
-      // Base twinkle
-      const twinkle = 1 + Math.sin(time * 3 + i * 1.3) * 0.2;
-
-      // Check if this star is "active" (connected by any drawn line)
-      let isActive = false;
-      lines.forEach(([a, b], lineIdx) => {
-        const lineStart = linePhaseStart + (lineIdx / totalLines) * (linePhaseEnd - linePhaseStart);
-        const lineEnd = linePhaseStart + ((lineIdx + 1) / totalLines) * (linePhaseEnd - linePhaseStart);
-        const lineProgress = Math.min(1, Math.max(0, (p - lineStart) / (lineEnd - lineStart)));
-        if ((a === i || b === i) && lineProgress > 0.5) isActive = true;
-      });
+        // 🔊 Sound trigger: play when star first becomes active
+        if (isActive && !mesh.wasActive) {
+          audioManager.play('twinkle');
+          mesh.wasActive = true;
+        } else if (!isActive && mesh.wasActive) {
+          mesh.wasActive = false;
+        }
 
       // Divine mode when all lines complete
       const divineProgress = Math.min(1, Math.max(0, (p - 0.88) / 0.12));

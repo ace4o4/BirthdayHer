@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import audioManager from '../utils/audioManager';
 
 export default function ScratchOffReveal({ onReveal }) {
   const canvasRef = useRef(null);
@@ -146,6 +147,10 @@ export default function ScratchOffReveal({ onReveal }) {
       if (percentCleared > 75) { 
         isRevealedRef.current = true;
         
+        // 🔊 Stop scratch sound and play popper
+        audioManager.stop('scratch');
+        audioManager.play('popper');
+        
         // Remove listeners
         cleanupListeners();
         
@@ -191,6 +196,9 @@ export default function ScratchOffReveal({ onReveal }) {
       
       // Draw single point
       scratch(x, y, x + 0.1, y + 0.1);
+
+      // 🔊 Start scratching sound
+      audioManager.play('scratch');
     };
 
     const handlePointerMove = (e) => {
@@ -206,6 +214,8 @@ export default function ScratchOffReveal({ onReveal }) {
 
     const handlePointerUp = () => {
       drawState.current.isDrawing = false;
+      // 🔊 Stop scratching sound
+      audioManager.stop('scratch');
     };
 
     // Attach listeners

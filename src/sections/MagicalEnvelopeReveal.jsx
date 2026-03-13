@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import audioManager from '../utils/audioManager';
 
 // Paper Envelope 3D Component — looks like a real folded paper envelope
 const MainEnvelope = ({ isSwirling, envelopeStep }) => {
@@ -34,6 +35,8 @@ const MainEnvelope = ({ isSwirling, envelopeStep }) => {
         duration: 2,
         ease: "power2.out"
       });
+      // 🔊 Play magic sound
+      audioManager.play('magic');
     }
   }, [isSwirling]);
 
@@ -62,6 +65,9 @@ const MainEnvelope = ({ isSwirling, envelopeStep }) => {
           ease: "power2.out"
         });
       }
+      // 🔊 Play paper rustle sound
+      audioManager.play('paper');
+
       // Confetti
       setTimeout(() => {
         confetti({
