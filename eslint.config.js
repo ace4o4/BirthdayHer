@@ -6,7 +6,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 
 
-wegf,,ewya
+wegf,,e
 
 
 export default defineConfig([
