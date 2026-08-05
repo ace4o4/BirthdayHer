@@ -6,8 +6,6 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 
 
-w
-
 export default defineConfig([
   globalIgnores(['dist']),
   {
